@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 
@@ -9,7 +10,11 @@ import (
 
 var upgrader = websocket.Upgrader{} // use default options
 
-func echo(writer http.ResponseWriter, request *http.Request) {
+type Ping struct {
+	Ok bool
+}
+
+func health(writer http.ResponseWriter, request *http.Request) {
 	connection, err := upgrader.Upgrade(writer, request, nil)
 	if err != nil {
 		log.Print("upgrade:", err)
@@ -17,13 +22,25 @@ func echo(writer http.ResponseWriter, request *http.Request) {
 	}
 	defer connection.Close()
 	for {
-		messageType, message, err := connection.ReadMessage()
+		_, message, err := connection.ReadMessage()
 		if err != nil {
 			log.Println("read:", err)
 			break
 		}
 		log.Printf("recv: %s", message)
-		err = connection.WriteMessage(messageType, message)
+
+		// TODO: switch-case for message.operation
+		// TODO: get response message
+
+		ping := &Ping{Ok: true}
+		b, err := json.Marshal(ping)
+
+		if err != nil {
+				log.Println("marshal:",err)
+				return
+		}
+
+		err = connection.WriteMessage(websocket.TextMessage, b)
 		if err != nil {
 			log.Println("write:", err)
 			break
@@ -32,7 +49,7 @@ func echo(writer http.ResponseWriter, request *http.Request) {
 }
 
 func RunServer(host string, port string) {
-	http.HandleFunc("/echo", echo)
+	http.HandleFunc("/health", health)
 
 	var addr = host + ":" + port
 	log.Println("Listening at " + addr)

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"os"
 )
 
@@ -21,5 +20,5 @@ func parseEnv() (string, string) {
 
 func main() {
 	port, host := parseEnv()
-	log.Println("I exist! (port: " + port + ", host: " + host + ")")
+	RunServer(host, port)
 }

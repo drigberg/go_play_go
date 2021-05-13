@@ -3,7 +3,6 @@ package main
 /**
 TODO:
 - capture stones
-- detect eyes
 - determine territory
 - count points
 */
@@ -27,7 +26,7 @@ type Board struct {
 
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
-	canPlaceStone(Coord) bool
+	canPlaceStone(Coord, string) bool
 	countLiberties(Coord) int
 	getScores() (int, int)
 	listSpacesForColor(color string) []Coord
@@ -60,18 +59,49 @@ func (board *Board) getSpaceOwnership(coord Coord) string {
 	return board.Spaces[coord.X][coord.Y]
 }
 
-func (board *Board) canPlaceStone(coord Coord) bool {
-	if board.getSpaceOwnership(coord) != FREE {
-		return false
+func (board *Board) getAvailableSpaces(color string) []Coord {
+	available := []Coord{}
+	for x := 0; x < board.Size; x++ {
+		for y := 0; y < board.Size; y++ {
+			coord := Coord{X: x, Y: y}
+			isAvailable := false
+			if board.getSpaceOwnership(coord) == FREE {
+				if board.countLiberties(coord) > 0 {
+					isAvailable = true
+				} else {
+					// if no liberties, assert that connected stones will have at least one remaining liberty
+					allConnectedStones := board.getAllConnectedStones(coord, color, []Coord{})
+					groupLiberties := 0
+					for _, c := range allConnectedStones {
+						groupLiberties += board.countLibertiesFuture(c, coord)
+					}
+
+					if groupLiberties > 0 {
+						isAvailable = true
+					}
+				}
+			}
+			if isAvailable {
+				available = append(available, coord)
+			}
+		}
+	}
+	return available
+}
+
+func (board *Board) canPlaceStone(coord Coord, color string) bool {
+	available := board.getAvailableSpaces(color)
+	for _, c := range available {
+		if c.X == coord.X && c.Y == coord.Y {
+			return true
+		}
 	}
 
-	// TODO: cannot place in eyes unless taking capturing
-
-	return true
+	return false
 }
 
 func (board *Board) placeStone(coord Coord, color string) bool {
-	if !board.canPlaceStone(coord) {
+	if !board.canPlaceStone(coord, color) {
 		return false
 	}
 
@@ -101,7 +131,7 @@ func (board *Board) listSpacesForColor(color string) []Coord {
 }
 
 func (board *Board) isOnBoard(coord Coord) bool {
-	return coord.X >= 0 && coord.X <= board.Size && coord.Y >= 0 && coord.Y <= board.Size
+	return coord.X >= 0 && coord.X < board.Size && coord.Y >= 0 && coord.Y < board.Size
 }
 
 func (board *Board) getNeighborCoords(coord Coord) []Coord {
@@ -126,12 +156,18 @@ func (board *Board) countLiberties(coord Coord) int {
 	return liberties
 }
 
-func (board *Board) getConnectedStones(coord Coord) []Coord {
-	color := board.getSpaceOwnership(coord)
-	if color == FREE {
-		return nil
+func (board *Board) countLibertiesFuture(coord Coord, proposed Coord) int {
+	neighborCoords := board.getNeighborCoords(coord)
+	liberties := 0
+	for _, neighborCoord := range neighborCoords {
+		if board.getSpaceOwnership(neighborCoord) == FREE && !(coord.X == proposed.X && coord.Y == proposed.Y) {
+			liberties++
+		}
 	}
+	return liberties
+}
 
+func (board *Board) getConnectedStones(coord Coord, color string) []Coord {
 	neighborCoords := board.getNeighborCoords(coord)
 	connected := []Coord{}
 	for _, neighborCoord := range neighborCoords {
@@ -161,14 +197,11 @@ func (board *Board) getNeighboringOpponentStones(coord Coord) []Coord {
 	return opponentStones
 }
 
-func (board *Board) getAllConnectedStones(coord Coord, connected []Coord) []Coord {
-	color := board.getSpaceOwnership(coord)
-	if color == FREE {
-		return nil
-	}
-
+// we require a color argument so that we can see connected stones for proposed placements: if
+// we were just checking color by existing ownership, we'd get no results
+func (board *Board) getAllConnectedStones(coord Coord, color string, connected []Coord) []Coord {
 	connected = append(connected, coord)
-	neighbors := board.getConnectedStones(coord)
+	neighbors := board.getConnectedStones(coord, color)
 	if neighbors != nil {
 		for _, n := range neighbors {
 			// TODO: better duplicate checking (if c in list?)
@@ -179,7 +212,7 @@ func (board *Board) getAllConnectedStones(coord Coord, connected []Coord) []Coor
 				}
 			}
 			if isNew {
-				connected = board.getAllConnectedStones(n, connected)
+				connected = board.getAllConnectedStones(n, color, connected)
 			}
 		}
 	}

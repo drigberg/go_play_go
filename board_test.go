@@ -66,6 +66,37 @@ func TestBoardPlaceStone(t *testing.T) {
 	}
 }
 
+func TestBoardPlaceStoneInEyes(t *testing.T) {
+	gameBoard := NewBoard(9)
+
+	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.placeStone(Coord{X: 0, Y: 1}, BLACK)
+	gameBoard.placeStone(Coord{X: 1, Y: 2}, BLACK)
+	gameBoard.placeStone(Coord{X: 0, Y: 3}, BLACK)
+	gameBoard.placeStone(Coord{X: 2, Y: 1}, BLACK)
+
+	// Placing stones on occupied spaces
+	placedInEye := gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	if placedInEye {
+		t.Errorf("White should not be able to place stone in black corner eye")
+	}
+
+	placedInEye = gameBoard.placeStone(Coord{X: 0, Y: 2}, WHITE)
+	if placedInEye {
+		t.Errorf("White should not be able to place stone in black side eye")
+	}
+
+	placedInEye = gameBoard.placeStone(Coord{X: 1, Y: 1}, WHITE)
+	if placedInEye {
+		t.Errorf("White should not be able to place stone in black center eye")
+	}
+
+	placedInEye = gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
+	if !placedInEye {
+		t.Errorf("Black should be able to play in its own eyes")
+	}
+}
+
 func TestBoardRemoveStone(t *testing.T) {
 	gameBoard := NewBoard(9)
 
@@ -82,7 +113,7 @@ func TestBoardGetAllConnectedStonesSingle(t *testing.T) {
 	gameBoard := NewBoard(9)
 
 	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
 	if len(connectedStones) != 1 {
 		t.Errorf("Expected 1 connected stone, got %d", len(connectedStones))
@@ -97,7 +128,7 @@ func TestBoardGetAllConnectedStonesMultiple(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 2, Y: 0}, WHITE)
 	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
 
-	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
 	if len(connectedStones) != 4 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
@@ -113,7 +144,7 @@ func TestBoardGetAllConnectedStonesBroken(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
 	gameBoard.placeStone(Coord{X: 3, Y: 2}, WHITE)
 
-	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
 	if len(connectedStones) != 4 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
@@ -133,7 +164,7 @@ func TestBoardGetAllConnectedStonesMixed(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
 	gameBoard.placeStone(Coord{X: 5, Y: 5}, WHITE)
 
-	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
 	if len(connectedStones) != 6 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
@@ -153,7 +184,7 @@ func TestBoardGetAllConnectedStonesBlack(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 0, Y: 2}, WHITE)
 	gameBoard.placeStone(Coord{X: 5, Y: 5}, BLACK)
 
-	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, BLACK, []Coord{})
 
 	if len(connectedStones) != 6 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))

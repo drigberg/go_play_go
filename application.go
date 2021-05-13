@@ -7,7 +7,7 @@ import (
 func parseEnv() (string, string) {
 	port := os.Getenv("PORT")
 	if port == "" {
-		port = "5000"
+		port = "3001"
 	}
 
 	host := os.Getenv("HOST")

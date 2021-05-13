@@ -1,57 +1,65 @@
 package main
 
 import (
-	"encoding/json"
 	"log"
 	"net/http"
 
-	"github.com/gorilla/websocket"
+	"github.com/gin-gonic/gin"
+	socketio "github.com/googollee/go-socket.io"
 )
 
-var upgrader = websocket.Upgrader{} // use default options
+func GinMiddleware(allowOrigin string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)
+		c.Writer.Header().Set("Access-Control-Allow-Credentials", "true")
+		c.Writer.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS, GET, PUT, DELETE")
+		c.Writer.Header().Set("Access-Control-Allow-Headers", "Accept, Authorization, Content-Type, Content-Length, X-CSRF-Token, Token, session, Origin, Host, Connection, Accept-Encoding, Accept-Language, X-Requested-With")
 
-type Ping struct {
-	Ok bool
-}
-
-func health(writer http.ResponseWriter, request *http.Request) {
-	connection, err := upgrader.Upgrade(writer, request, nil)
-	if err != nil {
-		log.Print("upgrade:", err)
-		return
-	}
-	defer connection.Close()
-	for {
-		_, message, err := connection.ReadMessage()
-		if err != nil {
-			log.Println("read:", err)
-			break
-		}
-		log.Printf("recv: %s", message)
-
-		// TODO: switch-case for message.operation
-		// TODO: get response message
-
-		ping := &Ping{Ok: true}
-		b, err := json.Marshal(ping)
-
-		if err != nil {
-				log.Println("marshal:",err)
-				return
+		if c.Request.Method == http.MethodOptions {
+			c.AbortWithStatus(http.StatusNoContent)
+			return
 		}
 
-		err = connection.WriteMessage(websocket.TextMessage, b)
-		if err != nil {
-			log.Println("write:", err)
-			break
-		}
+		c.Request.Header.Del("Origin")
+		c.Next()
 	}
 }
+
 
 func RunServer(host string, port string) {
-	http.HandleFunc("/health", health)
+	router := gin.New()
+	server := socketio.NewServer(nil)
 
-	var addr = host + ":" + port
-	log.Println("Listening at " + addr)
-	log.Fatal(http.ListenAndServe(addr, nil))
+	server.OnConnect("/", func(s socketio.Conn) error {
+		s.SetContext("")
+		log.Println("connected:", s.ID())
+		s.Emit("data", "This is server, whaddap?")
+		return nil
+	})
+
+	server.OnEvent("/", "health", func(s socketio.Conn, msg string) {
+		log.Println("client-health:", msg)
+		s.Emit("data", "Yo yo!")
+	})
+
+	server.OnError("/", func(s socketio.Conn, e error) {
+		log.Println("meet error:", e)
+	})
+
+	server.OnDisconnect("/", func(s socketio.Conn, msg string) {
+		log.Println("Disconnected:", msg)
+	})
+
+	go server.Serve()
+	defer server.Close()
+
+	router.Use(GinMiddleware("http://localhost:3000"))
+
+	router.GET("/socket.io/*any", gin.WrapH(server))
+	router.POST("/socket.io/*any", gin.WrapH(server))
+	router.PUT("/socket.io/*any", gin.WrapH(server))
+
+	if err := router.Run(); err != nil {
+		log.Fatal("failed to run app: ", err)
+	}
 }

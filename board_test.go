@@ -65,3 +65,15 @@ func TestBoardPlaceStone(t *testing.T) {
 		t.Errorf("Should not have been able to play on same spot twice")
 	}
 }
+
+func TestBoardRemoveStone(t *testing.T) {
+	gameBoard := NewBoard(9)
+
+	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.removeStone(Coord{X: 0, Y: 0})
+	placedAgain := gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+
+	if !placedAgain {
+		t.Errorf("Should have been able to place stone after removing from that space")
+	}
+}

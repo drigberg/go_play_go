@@ -4,6 +4,14 @@ import (
 	"sort"
 )
 
+/**
+TODO:
+- capture stones
+- detect eyes
+- determine territory
+- count points
+*/
+
 const (
 	FREE  = "FREE"
 	WHITE = "WHITE"
@@ -27,6 +35,8 @@ type BoardInterface interface {
 	getScores() (int, int)
 	listSpacesForColor(color string) []string
 	placeStone(move Coord, color string) bool
+	removeStone(move Coord) bool
+	spaceIsOccupied(move Coord) bool
 }
 
 // assert that Board implements Interface
@@ -41,14 +51,19 @@ func NewBoard(size int) Board {
 	}
 }
 
-func (board *Board) canPlaceStone(move Coord) bool {
+func (board *Board) spaceIsOccupied(move Coord) bool {
 	spotStr := move.String()
-
 	if board.Spaces.WHITE[spotStr] {
-		return false
+		return true
 	}
-
 	if board.Spaces.BLACK[spotStr] {
+		return true
+	}
+	return false
+}
+
+func (board *Board) canPlaceStone(move Coord) bool {
+	if board.spaceIsOccupied(move) {
 		return false
 	}
 
@@ -72,6 +87,17 @@ func (board *Board) placeStone(move Coord, color string) bool {
 	return true
 }
 
+func (board *Board) removeStone(move Coord) bool {
+	if !board.spaceIsOccupied(move) {
+		return false
+	}
+
+	spotStr := move.String()
+	board.Spaces.BLACK[spotStr] = false
+	board.Spaces.WHITE[spotStr] = false
+	return true
+}
+
 func (board *Board) listSpacesForColor(color string) []string {
 	unsorted := board.Spaces.BLACK
 	if color == WHITE {
@@ -79,8 +105,10 @@ func (board *Board) listSpacesForColor(color string) []string {
 	}
 
 	spaces := []string{}
-	for space, _ := range unsorted {
-		spaces = append(spaces, space)
+	for space, value := range unsorted {
+		if value == true {
+			spaces = append(spaces, space)
+		}
 	}
 	sort.Strings(spaces)
 	return spaces

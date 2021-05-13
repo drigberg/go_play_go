@@ -13,16 +13,16 @@ func TestBoardNew(t *testing.T) {
 
 func TestBoardGetScoreEmpty(t *testing.T) {
 	gameBoard := NewBoard(9)
-	whiteScore, blackScore := gameBoard.getScores()
-	if whiteScore != 0 {
-		t.Errorf("Expected white to have score 0, got %d", whiteScore)
+	scores := gameBoard.GetScores()
+	if scores.WHITE != 0 {
+		t.Errorf("Expected white to have score 0, got %d", scores.WHITE)
 	}
-	if blackScore != 0 {
-		t.Errorf("Expected black to have score 0, got %d", blackScore)
+	if scores.BLACK != 0 {
+		t.Errorf("Expected black to have score 0, got %d", scores.BLACK)
 	}
 
-	whiteSpaces := gameBoard.listSpacesForColor(WHITE)
-	blackSpaces := gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
@@ -38,12 +38,12 @@ func TestBoardPlaceStone(t *testing.T) {
 
 	// Placing stones on empty spaces
 	placements := make([]bool, 3)
-	placements[0] = gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	placements[1] = gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
-	placements[2] = gameBoard.placeStone(Coord{X: 2, Y: 0}, BLACK)
+	placements[0] = gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
+	placements[1] = gameBoard.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
+	placements[2] = gameBoard.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
 
-	whiteSpaces := gameBoard.listSpacesForColor(WHITE)
-	blackSpaces := gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 
 	for i := range placements {
 		if !placements[i] {
@@ -60,7 +60,7 @@ func TestBoardPlaceStone(t *testing.T) {
 	}
 
 	// Placing stones on occupied spaces
-	placedAgain := gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	placedAgain := gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
 	if placedAgain {
 		t.Errorf("Should not have been able to play on same spot twice")
 	}
@@ -69,29 +69,29 @@ func TestBoardPlaceStone(t *testing.T) {
 func TestBoardPlaceStoneInEyes(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 0, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 0, Y: 3}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 3}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
 
 	// Placing stones on occupied spaces
-	placedInEye := gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	placedInEye := gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
 	if placedInEye {
 		t.Errorf("White should not be able to place stone in black corner eye")
 	}
 
-	placedInEye = gameBoard.placeStone(Coord{X: 0, Y: 2}, WHITE)
+	placedInEye = gameBoard.PlaceStone(Coord{X: 0, Y: 2}, WHITE)
 	if placedInEye {
 		t.Errorf("White should not be able to place stone in black side eye")
 	}
 
-	placedInEye = gameBoard.placeStone(Coord{X: 1, Y: 1}, WHITE)
+	placedInEye = gameBoard.PlaceStone(Coord{X: 1, Y: 1}, WHITE)
 	if placedInEye {
 		t.Errorf("White should not be able to place stone in black center eye")
 	}
 
-	placedInEye = gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
+	placedInEye = gameBoard.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
 	if !placedInEye {
 		t.Errorf("Black should be able to play in its own eyes")
 	}
@@ -100,9 +100,9 @@ func TestBoardPlaceStoneInEyes(t *testing.T) {
 func TestBoardRemoveStone(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
 	gameBoard.removeStone(Coord{X: 0, Y: 0})
-	placedAgain := gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	placedAgain := gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
 
 	if !placedAgain {
 		t.Errorf("Should have been able to place stone after removing from that space")
@@ -112,7 +112,7 @@ func TestBoardRemoveStone(t *testing.T) {
 func TestBoardGetAllConnectedStonesSingle(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
 	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
 	if len(connectedStones) != 1 {
@@ -123,10 +123,10 @@ func TestBoardGetAllConnectedStonesSingle(t *testing.T) {
 func TestBoardGetAllConnectedStonesMultiple(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
 
 	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
@@ -138,11 +138,11 @@ func TestBoardGetAllConnectedStonesMultiple(t *testing.T) {
 func TestBoardGetAllConnectedStonesBroken(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
-	gameBoard.placeStone(Coord{X: 3, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 2}, WHITE)
 
 	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
@@ -154,15 +154,15 @@ func TestBoardGetAllConnectedStonesBroken(t *testing.T) {
 func TestBoardGetAllConnectedStonesMixed(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 1, Y: 1}, WHITE)
-	gameBoard.placeStone(Coord{X: 1, Y: 2}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 2}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 5, Y: 5}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 5, Y: 5}, WHITE)
 
 	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, WHITE, []Coord{})
 
@@ -174,15 +174,15 @@ func TestBoardGetAllConnectedStonesMixed(t *testing.T) {
 func TestBoardGetAllConnectedStonesBlack(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 0, Y: 2}, WHITE)
-	gameBoard.placeStone(Coord{X: 5, Y: 5}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 5, Y: 5}, BLACK)
 
 	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, BLACK, []Coord{})
 
@@ -194,9 +194,9 @@ func TestBoardGetAllConnectedStonesBlack(t *testing.T) {
 func TestBoardGetNeighboringOpponentStone(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 3, Y: 3}, BLACK)
-	gameBoard.placeStone(Coord{X: 3, Y: 4}, WHITE)
-	gameBoard.placeStone(Coord{X: 3, Y: 5}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 3}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 4}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 5}, BLACK)
 
 	opponentStones := gameBoard.getNeighboringOpponentStones(Coord{X: 3, Y: 3}, BLACK)
 	if len(opponentStones) != 1 {
@@ -217,10 +217,10 @@ func TestBoardGetNeighboringOpponentStone(t *testing.T) {
 func TestBoardGetLiberties(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 5, Y: 5}, WHITE)
-	gameBoard.placeStone(Coord{X: 7, Y: 7}, WHITE)
-	gameBoard.placeStone(Coord{X: 7, Y: 8}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 5, Y: 5}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 7, Y: 7}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 7, Y: 8}, WHITE)
 
 	l := gameBoard.countLiberties(Coord{X: 0, Y: 0})
 	if l != 2 {
@@ -241,12 +241,12 @@ func TestBoardGetLiberties(t *testing.T) {
 func TestBoardCaptureSingleCorner(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 0, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
 
-	whiteSpaces := gameBoard.listSpacesForColor(WHITE)
-	blackSpaces := gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
@@ -260,14 +260,14 @@ func TestBoardCaptureSingleCorner(t *testing.T) {
 func TestBoardCaptureGroupCorner(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	gameBoard.placeStone(Coord{X: 0, Y: 1}, WHITE)
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
 
-	whiteSpaces := gameBoard.listSpacesForColor(WHITE)
-	blackSpaces := gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
@@ -281,20 +281,20 @@ func TestBoardCaptureGroupCorner(t *testing.T) {
 func TestBoardCaptureGroupCenter(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 1, Y: 2}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 2}, WHITE)
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
 
-	gameBoard.placeStone(Coord{X: 2, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 3, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 3, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 3}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 3}, BLACK)
-	gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 3}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 3}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
 
 	// place second-to-last stone
-	whiteSpaces := gameBoard.listSpacesForColor(WHITE)
-	blackSpaces := gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 	if len(whiteSpaces) != 3 {
 		t.Errorf("Expected 3 white spaces, got %d", len(whiteSpaces))
 	}
@@ -303,10 +303,10 @@ func TestBoardCaptureGroupCenter(t *testing.T) {
 	}
 
 	// place final stone
-	gameBoard.placeStone(Coord{X: 1, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 1}, BLACK)
 
-	whiteSpaces = gameBoard.listSpacesForColor(WHITE)
-	blackSpaces = gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces = gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces = gameBoard.ListSpacesForColor(BLACK)
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
 	}
@@ -318,21 +318,21 @@ func TestBoardCaptureGroupCenter(t *testing.T) {
 func TestBoardCaptureMultipleGroups(t *testing.T) {
 	gameBoard := NewBoard(9)
 
-	gameBoard.placeStone(Coord{X: 1, Y: 1}, WHITE)
-	gameBoard.placeStone(Coord{X: 3, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 1}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 1}, WHITE)
 
-	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 3, Y: 0}, BLACK)
-	gameBoard.placeStone(Coord{X: 4, Y: 1}, BLACK)
-	gameBoard.placeStone(Coord{X: 3, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 2, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 1, Y: 2}, BLACK)
-	gameBoard.placeStone(Coord{X: 0, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 0}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 4, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 1, Y: 2}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
 
 	// place second-to-last stone
-	whiteSpaces := gameBoard.listSpacesForColor(WHITE)
-	blackSpaces := gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 
 	if len(whiteSpaces) != 2 {
 		t.Errorf("Expected 2 white spaces, got %d", len(whiteSpaces))
@@ -342,11 +342,11 @@ func TestBoardCaptureMultipleGroups(t *testing.T) {
 		t.Errorf("Expected 8 black spaces, got %d", len(blackSpaces))
 	}
 
-	gameBoard.placeStone(Coord{X: 2, Y: 1}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
 
 	// place final stone
-	whiteSpaces = gameBoard.listSpacesForColor(WHITE)
-	blackSpaces = gameBoard.listSpacesForColor(BLACK)
+	whiteSpaces = gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces = gameBoard.ListSpacesForColor(BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))

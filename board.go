@@ -12,6 +12,11 @@ const (
 	BLACK = "BLACK"
 )
 
+type Scores struct {
+	BLACK int
+	WHITE int
+}
+
 type Coord struct {
 	X int
 	Y int
@@ -25,13 +30,10 @@ type Board struct {
 
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
-	canPlaceStone(Coord, string) bool
-	countLiberties(Coord) int
-	getScores() (int, int)
-	listSpacesForColor(color string) []Coord
-	placeStone(coord Coord, color string) bool
-	removeStone(coord Coord) bool
-	getSpaceOwnership(coord Coord) string
+	PlaceStone(coord Coord, color string) bool
+	GetScores() Scores
+	GetAvailableSpaces(color string) []Coord
+	ListSpacesForColor(color string) []Coord
 }
 
 // assert that Board implements Interface
@@ -95,7 +97,7 @@ func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
 	return stonesToCapture
 }
 
-func (board *Board) getAvailableSpaces(color string) []Coord {
+func (board *Board) GetAvailableSpaces(color string) []Coord {
 	available := []Coord{}
 	for x := 0; x < board.Size; x++ {
 		for y := 0; y < board.Size; y++ {
@@ -134,7 +136,7 @@ func (board *Board) getAvailableSpaces(color string) []Coord {
 }
 
 func (board *Board) canPlaceStone(coord Coord, color string) bool {
-	available := board.getAvailableSpaces(color)
+	available := board.GetAvailableSpaces(color)
 	for _, c := range available {
 		if c.X == coord.X && c.Y == coord.Y {
 			return true
@@ -144,7 +146,7 @@ func (board *Board) canPlaceStone(coord Coord, color string) bool {
 	return false
 }
 
-func (board *Board) placeStone(coord Coord, color string) bool {
+func (board *Board) PlaceStone(coord Coord, color string) bool {
 	if !board.canPlaceStone(coord, color) {
 		return false
 	}
@@ -167,7 +169,7 @@ func (board *Board) removeStone(coord Coord) bool {
 	return true
 }
 
-func (board *Board) listSpacesForColor(color string) []Coord {
+func (board *Board) ListSpacesForColor(color string) []Coord {
 	spaces := []Coord{}
 	for x := 0; x < len(board.Spaces); x++ {
 		for y := 0; y < len(board.Spaces[x]); y++ {
@@ -264,9 +266,12 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 	return connected
 }
 
-func (board *Board) getScores() (int, int) {
+func (board *Board) GetScores() Scores {
 	// TODO: tally points
 	// whiteScore := 0
 	// blackScore: := 0
-	return 0, 0
+	return Scores{
+		BLACK: 0,
+		WHITE: 0,
+	}
 }

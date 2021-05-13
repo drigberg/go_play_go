@@ -11,7 +11,7 @@ import (
 )
 
 type GameRoom struct {
-	M 		      sync.Mutex
+	M             sync.Mutex
 	ID            int
 	Players       map[string]*Player
 	Turn          int
@@ -22,19 +22,19 @@ type GameRoom struct {
 
 // GameManager handles all requests and game states
 type GameManager struct {
-	M      		sync.Mutex
-	games  		map[int]*GameRoom
+	M             sync.Mutex
+	games         map[int]*GameRoom
 	gameIDPointer int
-	quit 		chan interface{}
-	listener 	net.Listener
-	wg 			sync.WaitGroup
+	quit          chan interface{}
+	listener      net.Listener
+	wg            sync.WaitGroup
 }
 
 // NewServer creates a GameManager instance
 func NewGameManager() GameManager {
 	return GameManager{
-		games:  make(map[int]*GameRoom),
-		quit: make(chan interface {}),
+		games: make(map[int]*GameRoom),
+		quit:  make(chan interface{}),
 	}
 }
 
@@ -44,7 +44,7 @@ func (gameManager *GameManager) createGame(userID string) int {
 	defer func() { gameManager.gameIDPointer++ }()
 
 	player := Player{
-		UserID:       userID,
+		UserID: userID,
 	}
 
 	players := make(map[string]*Player)
@@ -66,7 +66,6 @@ func (game *GameRoom) PlayMove(move Coord, color string) {
 	moveStr := move.String()
 	game.Board.Spaces[color][moveStr] = true
 }
-
 
 // IsTurn turns if it's a user's turn or not
 func IsTurn(game *GameRoom, userID string) bool {
@@ -92,7 +91,6 @@ func GinMiddleware(allowOrigin string) gin.HandlerFunc {
 		c.Next()
 	}
 }
-
 
 func RunServer(host string, port string) {
 	router := gin.New()

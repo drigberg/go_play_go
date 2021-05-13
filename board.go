@@ -21,8 +21,9 @@ type Board struct {
 
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
+	canPlaceStone(Coord) bool
 	getScores() (int, int)
-	isTaken(Coord) bool
+	listSpacesForColor(color string) []string
 	placeStone(move Coord, color string) bool
 }
 
@@ -39,8 +40,22 @@ func NewBoard() Board {
 	}
 }
 
+func (board *Board) canPlaceStone(move Coord) bool {
+	spotStr := move.String()
+
+	for color := range board.Spaces {
+		if board.Spaces[color][spotStr] {
+			return false
+		}
+	}
+
+	// TODO: cannot place in eyes unless taking capturing
+
+	return true
+}
+
 func (board *Board) placeStone(move Coord, color string) bool {
-	if board.isTaken(move) {
+	if !board.canPlaceStone(move) {
 		return false
 	}
 
@@ -49,7 +64,7 @@ func (board *Board) placeStone(move Coord, color string) bool {
 	return true
 }
 
-func (board *Board) listSpaces(color string) []string {
+func (board *Board) listSpacesForColor(color string) []string {
 	spaces := []string{}
 	for space, _ := range board.Spaces[color] {
 		spaces = append(spaces, space)
@@ -65,14 +80,4 @@ func (board *Board) getScores() (int, int) {
 	return 0, 0
 }
 
-func (board *Board) isTaken(move Coord) bool {
-	spotStr := move.String()
 
-	for color := range board.Spaces {
-		if board.Spaces[color][spotStr] {
-			return true
-		}
-	}
-
-	return false
-}

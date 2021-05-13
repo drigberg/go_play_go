@@ -4,7 +4,6 @@ import (
 	"strconv"
 )
 
-
 type Coord struct {
 	X int
 	Y int
@@ -25,6 +24,6 @@ type OpenRoom struct {
 }
 
 type Player struct {
-	UserID       string
-	Color        string
+	UserID string
+	Color  string
 }

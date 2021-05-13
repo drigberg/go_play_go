@@ -17,11 +17,11 @@ func TestBoardNew(t *testing.T) {
 		t.Errorf("Expected board.Spaces to have 2 keys, found %d", len(keys))
 	}
 
-	if gameBoard.Spaces["white"] == nil {
+	if gameBoard.Spaces[WHITE] == nil {
 		t.Error("Expected board.Spaces['white'] to not be nil")
 	}
 
-	if gameBoard.Spaces["black"] == nil {
+	if gameBoard.Spaces[BLACK] == nil {
 		t.Error("Expected board.Spaces['black'] to not be nil")
 	}
 }
@@ -35,5 +35,34 @@ func TestBoardGetScoreEmpty(t *testing.T) {
 	if blackScore != 0 {
 		t.Errorf("Expected black to have score 0, got %d", blackScore)
 	}
+
+	whiteSpaces := gameBoard.listSpaces(WHITE)
+	blackSpaces := gameBoard.listSpaces(BLACK)
+
+	if len(whiteSpaces) != 0 {
+		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
+	}
+
+	if len(blackSpaces) != 0 {
+		t.Errorf("Expected no black spaces, got %d", len(blackSpaces))
+	}
 }
 
+func TestBoardPlaceStone(t *testing.T) {
+	gameBoard := NewBoard()
+
+	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
+	gameBoard.placeStone(Coord{X: 1, Y: 0}, BLACK)
+	gameBoard.placeStone(Coord{X: 2, Y: 0}, BLACK)
+
+	whiteSpaces := gameBoard.listSpaces(WHITE)
+	blackSpaces := gameBoard.listSpaces(BLACK)
+
+	if len(whiteSpaces) != 1 {
+		t.Errorf("Expected 1 white space, got %d", len(whiteSpaces))
+	}
+
+	if len(blackSpaces) != 2 {
+		t.Errorf("Expected 2 black spaces, got %d", len(blackSpaces))
+	}
+}

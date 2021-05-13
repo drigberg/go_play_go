@@ -9,7 +9,9 @@ var (
 )
 
 const (
-	FREE = "FREE"
+	FREE  = "FREE"
+	WHITE = "WHITE"
+	BLACK = "BLACK"
 )
 
 // Board contains the state of the game board
@@ -20,8 +22,8 @@ type Board struct {
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
 	getScores() (int, int)
-	checkOwnership(int, string, Coord) bool
-	isTakenBy(Coord) string
+	isTaken(Coord) bool
+	placeStone(move Coord, color string) bool
 }
 
 // assert that Board implements Interface
@@ -30,11 +32,21 @@ var _ BoardInterface = (*Board)(nil)
 // New creates an empty board
 func NewBoard() Board {
 	spaces := make(map[string]map[string]bool)
-	spaces["white"] = make(map[string]bool)
-	spaces["black"] = make(map[string]bool)
+	spaces[WHITE] = make(map[string]bool)
+	spaces[BLACK] = make(map[string]bool)
 	return Board{
 		Spaces: spaces,
 	}
+}
+
+func (board *Board) placeStone(move Coord, color string) bool {
+	if board.isTaken(move) {
+		return false
+	}
+
+	spotStr := move.String()
+	board.Spaces[color][spotStr] = true
+	return true
 }
 
 func (board *Board) listSpaces(color string) []string {
@@ -53,20 +65,14 @@ func (board *Board) getScores() (int, int) {
 	return 0, 0
 }
 
-func (board *Board) isTakenBy(move Coord) string {
+func (board *Board) isTaken(move Coord) bool {
 	spotStr := move.String()
 
 	for color := range board.Spaces {
 		if board.Spaces[color][spotStr] {
-			return color
+			return true
 		}
 	}
 
-	return FREE
+	return false
 }
-
-func (board *Board) checkOwnership(gameID int, userID string, move Coord) (bool) {
-	return board.isTakenBy(move) != FREE
-}
-
-

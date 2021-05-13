@@ -2,7 +2,6 @@ package main
 
 import (
 	"log"
-	"net"
 	"net/http"
 	"sync"
 
@@ -10,31 +9,18 @@ import (
 	socketio "github.com/googollee/go-socket.io"
 )
 
-type GameRoom struct {
-	M             sync.Mutex
-	ID            int
-	Players       map[string]*Player
-	Turn          int
-	Board         Board
-	FirstPlayerID string
-	IsOver        bool
-}
-
 // GameManager handles all requests and game states
 type GameManager struct {
 	M             sync.Mutex
-	games         map[int]*GameRoom
+	games         map[int]*Game
 	gameIDPointer int
-	quit          chan interface{}
-	listener      net.Listener
 	wg            sync.WaitGroup
 }
 
 // NewServer creates a GameManager instance
 func NewGameManager() GameManager {
 	return GameManager{
-		games: make(map[int]*GameRoom),
-		quit:  make(chan interface{}),
+		games: make(map[int]*Game),
 	}
 }
 
@@ -51,7 +37,7 @@ func (gameManager *GameManager) createGame(userID string) int {
 
 	players[userID] = &player
 
-	gameManager.games[gameManager.gameIDPointer] = &GameRoom{
+	gameManager.games[gameManager.gameIDPointer] = &Game{
 		ID:      gameManager.gameIDPointer,
 		Players: players,
 		Turn:    0,
@@ -59,14 +45,6 @@ func (gameManager *GameManager) createGame(userID string) int {
 	}
 
 	return gameManager.gameIDPointer
-}
-
-// IsTurn turns if it's a user's turn or not
-func IsTurn(game *GameRoom, userID string) bool {
-	if userID == game.FirstPlayerID {
-		return game.Turn%2 == 1
-	}
-	return game.Turn%2 == 0
 }
 
 func GinMiddleware(allowOrigin string) gin.HandlerFunc {

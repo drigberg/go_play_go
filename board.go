@@ -36,7 +36,7 @@ type BoardInterface interface {
 	ListSpacesForColor(color string) []Coord
 }
 
-// assert that Board implements Interface
+// assert that Board implements BoardInterface
 var _ BoardInterface = (*Board)(nil)
 
 // New creates an empty board

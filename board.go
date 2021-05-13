@@ -29,6 +29,7 @@ type Board struct {
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
 	canPlaceStone(Coord) bool
+	countLiberties(Coord) int
 	getScores() (int, int)
 	listSpacesForColor(color string) []Coord
 	placeStone(coord Coord, color string) bool
@@ -104,18 +105,39 @@ func (board *Board) isOnBoard(coord Coord) bool {
 	return coord.X >= 0 && coord.X <= board.Size && coord.Y >= 0 && coord.Y <= board.Size
 }
 
+
+func (board *Board) getNeighborCoords(coord Coord) []Coord {
+	unverified := []Coord{Coord{X: coord.X - 1, Y: coord.Y},Coord{X: coord.X + 1, Y: coord.Y},Coord{X: coord.X, Y: coord.Y - 1},Coord{X: coord.X, Y: coord.Y + 1}}
+	neighborCoords := []Coord{}
+	for _, c := range unverified {
+		if board.isOnBoard(c) {
+			neighborCoords = append(neighborCoords, c)
+		}
+	}
+	return neighborCoords
+}
+
+func (board *Board) countLiberties(coord Coord) int {
+	neighborCoords := board.getNeighborCoords(coord)
+	liberties := 0
+	for _, neighborCoord := range neighborCoords {
+		if board.getSpaceOwnership(neighborCoord) == FREE {
+			liberties++
+		}
+	}
+	return liberties
+}
+
 func (board *Board) getConnectedStones(coord Coord) ([]Coord, string) {
 	color := board.getSpaceOwnership(coord)
 	if color == FREE {
 		return nil, FREE
 	}
 
-	neighborCoords := []Coord{Coord{X: coord.X - 1, Y: coord.Y},Coord{X: coord.X + 1, Y: coord.Y},Coord{X: coord.X, Y: coord.Y - 1},Coord{X: coord.X, Y: coord.Y + 1}}
-
+	neighborCoords := board.getNeighborCoords(coord)
 	connected := []Coord{}
-
 	for _, neighborCoord := range neighborCoords {
-		if board.isOnBoard(neighborCoord) && board.getSpaceOwnership(neighborCoord) == color {
+		if board.getSpaceOwnership(neighborCoord) == color {
 			connected = append(connected, neighborCoord)
 		}
 	}

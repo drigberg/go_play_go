@@ -180,3 +180,28 @@ func TestBoardGetAllConnectedStonesBlack(t *testing.T) {
 	}
 }
 
+
+func TestBoardGetLiberties(t *testing.T) {
+	gameBoard := NewBoard(9)
+
+	gameBoard.placeStone(Coord{X: 0, Y: 0}, BLACK)
+	gameBoard.placeStone(Coord{X: 5, Y: 5}, WHITE)
+	gameBoard.placeStone(Coord{X: 7, Y: 7}, WHITE)
+	gameBoard.placeStone(Coord{X: 7, Y: 8}, WHITE)
+
+	l := gameBoard.countLiberties(Coord{X: 0, Y:0})
+	if l != 2 {
+		t.Errorf("Expected 2 liberties, got %d", l)
+	}
+
+	l = gameBoard.countLiberties(Coord{X: 5, Y:5})
+	if l != 4 {
+		t.Errorf("Expected 4 liberties, got %d", l)
+	}
+
+	l = gameBoard.countLiberties(Coord{X: 7, Y:7})
+	if l != 3 {
+		t.Errorf("Expected 3 liberties, got %d", l)
+	}
+}
+

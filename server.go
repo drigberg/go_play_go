@@ -55,16 +55,10 @@ func (gameManager *GameManager) createGame(userID string) int {
 		ID:      gameManager.gameIDPointer,
 		Players: players,
 		Turn:    0,
-		Board:   NewBoard(),
+		Board:   NewBoard(9),
 	}
 
 	return gameManager.gameIDPointer
-}
-
-// PlayMove places a piece
-func (game *GameRoom) PlayMove(move Coord, color string) {
-	moveStr := move.String()
-	game.Board.Spaces[color][moveStr] = true
 }
 
 // IsTurn turns if it's a user's turn or not

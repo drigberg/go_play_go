@@ -5,29 +5,14 @@ import (
 )
 
 func TestBoardNew(t *testing.T) {
-	gameBoard := NewBoard()
-	if gameBoard.Spaces == nil {
-		t.Error("Expected board.Spaces to not be nil")
-	}
-	keys := make([]string, 0, len(gameBoard.Spaces))
-	for k := range gameBoard.Spaces {
-		keys = append(keys, k)
-	}
-	if len(keys) != 2 {
-		t.Errorf("Expected board.Spaces to have 2 keys, found %d", len(keys))
-	}
-
-	if gameBoard.Spaces[WHITE] == nil {
-		t.Error("Expected board.Spaces['white'] to not be nil")
-	}
-
-	if gameBoard.Spaces[BLACK] == nil {
-		t.Error("Expected board.Spaces['black'] to not be nil")
+	gameBoard := NewBoard(9)
+	if gameBoard.Size != 9 {
+		t.Errorf("Expected board size 9, got %d", gameBoard.Size)
 	}
 }
 
 func TestBoardGetScoreEmpty(t *testing.T) {
-	gameBoard := NewBoard()
+	gameBoard := NewBoard(9)
 	whiteScore, blackScore := gameBoard.getScores()
 	if whiteScore != 0 {
 		t.Errorf("Expected white to have score 0, got %d", whiteScore)
@@ -49,7 +34,7 @@ func TestBoardGetScoreEmpty(t *testing.T) {
 }
 
 func TestBoardPlaceStone(t *testing.T) {
-	gameBoard := NewBoard()
+	gameBoard := NewBoard(9)
 
 	// Placing stones on empty spaces
 	placements := make([]bool, 3)

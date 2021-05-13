@@ -2,7 +2,6 @@ package main
 
 /**
 TODO:
-- detect liberties
 - capture stones
 - detect eyes
 - determine territory
@@ -128,10 +127,10 @@ func (board *Board) countLiberties(coord Coord) int {
 	return liberties
 }
 
-func (board *Board) getConnectedStones(coord Coord) ([]Coord, string) {
+func (board *Board) getConnectedStones(coord Coord) []Coord {
 	color := board.getSpaceOwnership(coord)
 	if color == FREE {
-		return nil, FREE
+		return nil
 	}
 
 	neighborCoords := board.getNeighborCoords(coord)
@@ -142,17 +141,35 @@ func (board *Board) getConnectedStones(coord Coord) ([]Coord, string) {
 		}
 	}
 
-	return connected, FREE
+	return connected
 }
 
-func (board *Board) getAllConnectedStones(coord Coord, connected []Coord) ([]Coord, string) {
+func (board *Board) getNeighboringOpponentStones(coord Coord) []Coord {
 	color := board.getSpaceOwnership(coord)
 	if color == FREE {
-		return nil, FREE
+		return nil
+	}
+
+	neighborCoords := board.getNeighborCoords(coord)
+	opponentStones := []Coord{}
+	for _, neighborCoord := range neighborCoords {
+		neighborColor := board.getSpaceOwnership(neighborCoord)
+		if neighborColor != FREE && neighborColor != color {
+			opponentStones = append(opponentStones, neighborCoord)
+		}
+	}
+
+	return opponentStones
+}
+
+func (board *Board) getAllConnectedStones(coord Coord, connected []Coord) []Coord {
+	color := board.getSpaceOwnership(coord)
+	if color == FREE {
+		return nil
 	}
 
 	connected = append(connected, coord)
-	neighbors, _ := board.getConnectedStones(coord)
+	neighbors := board.getConnectedStones(coord)
 	if neighbors != nil {
 		for _, n := range neighbors {
 			// TODO: better duplicate checking (if c in list?)
@@ -163,12 +180,12 @@ func (board *Board) getAllConnectedStones(coord Coord, connected []Coord) ([]Coo
 				}
 			}
 			if isNew {
-				connected, _ = board.getAllConnectedStones(n, connected)
+				connected = board.getAllConnectedStones(n, connected)
 			}
 		}
 	}
 
-	return connected, color
+	return connected
 }
 
 func (board *Board) getScores() (int, int) {

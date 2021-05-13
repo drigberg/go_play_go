@@ -82,14 +82,10 @@ func TestBoardGetAllConnectedStonesSingle(t *testing.T) {
 	gameBoard := NewBoard(9)
 
 	gameBoard.placeStone(Coord{X: 0, Y: 0}, WHITE)
-	connectedStones, color := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
 
 	if len(connectedStones) != 1 {
 		t.Errorf("Expected 1 connected stone, got %d", len(connectedStones))
-	}
-
-	if color != WHITE {
-		t.Errorf("All connected stones should be WHITE")
 	}
 }
 
@@ -101,14 +97,10 @@ func TestBoardGetAllConnectedStonesMultiple(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 2, Y: 0}, WHITE)
 	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
 
-	connectedStones, color := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
 
 	if len(connectedStones) != 4 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
-	}
-
-	if color != WHITE {
-		t.Errorf("All connected stones should be WHITE")
 	}
 }
 
@@ -121,14 +113,10 @@ func TestBoardGetAllConnectedStonesBroken(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 2, Y: 1}, WHITE)
 	gameBoard.placeStone(Coord{X: 3, Y: 2}, WHITE)
 
-	connectedStones, color := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
 
 	if len(connectedStones) != 4 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
-	}
-
-	if color != WHITE {
-		t.Errorf("All connected stones should be WHITE")
 	}
 }
 
@@ -145,14 +133,10 @@ func TestBoardGetAllConnectedStonesMixed(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 0, Y: 2}, BLACK)
 	gameBoard.placeStone(Coord{X: 5, Y: 5}, WHITE)
 
-	connectedStones, color := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
 
 	if len(connectedStones) != 6 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
-	}
-
-	if color != WHITE {
-		t.Errorf("All connected stones should be WHITE")
 	}
 }
 
@@ -169,14 +153,34 @@ func TestBoardGetAllConnectedStonesBlack(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 0, Y: 2}, WHITE)
 	gameBoard.placeStone(Coord{X: 5, Y: 5}, BLACK)
 
-	connectedStones, color := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
+	connectedStones := gameBoard.getAllConnectedStones(Coord{X: 0, Y: 0}, []Coord{})
 
 	if len(connectedStones) != 6 {
 		t.Errorf("Expected 4 connected stone, got %d", len(connectedStones))
 	}
+}
 
-	if color != BLACK {
-		t.Errorf("All connected stones should be BLACK")
+func TestBoardGetNeighboringOpponentStone(t *testing.T) {
+	gameBoard := NewBoard(9)
+
+	gameBoard.placeStone(Coord{X: 3, Y: 3}, BLACK)
+	gameBoard.placeStone(Coord{X: 3, Y: 4}, WHITE)
+	gameBoard.placeStone(Coord{X: 3, Y: 5}, BLACK)
+
+
+	opponentStones := gameBoard.getNeighboringOpponentStones(Coord{X: 3, Y: 3})
+	if len(opponentStones) != 1 {
+		t.Errorf("Expected 1 neighboring opponent stone, got %d", len(opponentStones))
+	}
+
+	opponentStones = gameBoard.getNeighboringOpponentStones(Coord{X: 3, Y: 4})
+	if len(opponentStones) != 2 {
+		t.Errorf("Expected 1 neighboring opponent stone, got %d", len(opponentStones))
+	}
+
+	opponentStones = gameBoard.getNeighboringOpponentStones(Coord{X: 3, Y: 5})
+	if len(opponentStones) != 1 {
+		t.Errorf("Expected 1 neighboring opponent stone, got %d", len(opponentStones))
 	}
 }
 

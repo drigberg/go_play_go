@@ -2,7 +2,6 @@ package main
 
 /**
 TODO:
-- capture stones
 - determine territory
 - count points
 */
@@ -59,6 +58,43 @@ func (board *Board) getSpaceOwnership(coord Coord) string {
 	return board.Spaces[coord.X][coord.Y]
 }
 
+func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
+	opponentColor := WHITE
+	if color == WHITE {
+		opponentColor = BLACK
+	}
+
+	// if no liberties, assert that we are capturing stones
+	neighboringOpponentStones := board.getNeighboringOpponentStones(coord, color)
+	stonesToCapture := []Coord{}
+	for _, stone := range neighboringOpponentStones {
+		// Multiple neighboring opponent stones may belong to on group being captured,
+		// but we could also be capturing multiple groups.
+		alreadyCaptured := false
+		for _, captured := range stonesToCapture {
+			if stone.X == captured.X && stone.Y == captured.Y {
+				alreadyCaptured = true
+			}
+		}
+
+		if !alreadyCaptured {
+			opponentStoneGroup := board.getAllConnectedStones(stone, opponentColor, []Coord{})
+			opponentGroupLiberties := 0
+			for _, c := range opponentStoneGroup {
+				opponentGroupLiberties += board.countLibertiesFuture(c, coord)
+			}
+
+			if opponentGroupLiberties == 0 {
+				for _, toCapture := range opponentStoneGroup {
+					stonesToCapture = append(stonesToCapture, toCapture)
+				}
+			}
+		}
+	}
+
+	return stonesToCapture
+}
+
 func (board *Board) getAvailableSpaces(color string) []Coord {
 	available := []Coord{}
 	for x := 0; x < board.Size; x++ {
@@ -69,15 +105,23 @@ func (board *Board) getAvailableSpaces(color string) []Coord {
 				if board.countLiberties(coord) > 0 {
 					isAvailable = true
 				} else {
-					// if no liberties, assert that connected stones will have at least one remaining liberty
-					allConnectedStones := board.getAllConnectedStones(coord, color, []Coord{})
-					groupLiberties := 0
-					for _, c := range allConnectedStones {
-						groupLiberties += board.countLibertiesFuture(c, coord)
-					}
+					// if no liberties, assert that we are capturing stones
+					stonesToCapture := board.getStonesToCapture(coord, color)
 
-					if groupLiberties > 0 {
+					if len(stonesToCapture) > 0 {
 						isAvailable = true
+					} else {
+						// if no liberties and not capturing, assert that connected stones will have at
+						// least one remaining liberty
+						allConnectedStones := board.getAllConnectedStones(coord, color, []Coord{})
+						groupLiberties := 0
+						for _, c := range allConnectedStones {
+							groupLiberties += board.countLibertiesFuture(c, coord)
+						}
+
+						if groupLiberties > 0 {
+							isAvailable = true
+						}
 					}
 				}
 			}
@@ -106,6 +150,11 @@ func (board *Board) placeStone(coord Coord, color string) bool {
 	}
 
 	board.Spaces[coord.X][coord.Y] = color
+
+	stonesToCapture := board.getStonesToCapture(coord, color)
+	for _, toCapture := range stonesToCapture {
+		board.removeStone(toCapture)
+	}
 	return true
 }
 
@@ -179,12 +228,7 @@ func (board *Board) getConnectedStones(coord Coord, color string) []Coord {
 	return connected
 }
 
-func (board *Board) getNeighboringOpponentStones(coord Coord) []Coord {
-	color := board.getSpaceOwnership(coord)
-	if color == FREE {
-		return nil
-	}
-
+func (board *Board) getNeighboringOpponentStones(coord Coord, color string) []Coord {
 	neighborCoords := board.getNeighborCoords(coord)
 	opponentStones := []Coord{}
 	for _, neighborCoord := range neighborCoords {

@@ -47,6 +47,19 @@ func (gameManager *GameManager) createGame(userID string) int {
 	return gameManager.gameIDPointer
 }
 
+
+func (gameManager *GameManager) OnPlaceStone(gameID int, userID string, coord Coord) bool {
+	game := gameManager.games[gameID]
+	if game != nil {
+		game.M.Lock()
+		defer game.M.Unlock()
+	}
+
+	placed := game.PlaceStone(userID, coord)
+	return placed
+}
+
+
 func GinMiddleware(allowOrigin string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		c.Writer.Header().Set("Access-Control-Allow-Origin", allowOrigin)

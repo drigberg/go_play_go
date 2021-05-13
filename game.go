@@ -74,6 +74,7 @@ func (game *Game) Pass(userID string) {
 	game.Turn += 1
 }
 
+// Returns all the information that the client needs for the game state
 func (game *Game) GetInfo(userID string) GameInfo {
 	color := game.GetPlayerColor(userID)
 	Spaces := Spaces{

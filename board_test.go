@@ -167,7 +167,6 @@ func TestBoardGetNeighboringOpponentStone(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 3, Y: 4}, WHITE)
 	gameBoard.placeStone(Coord{X: 3, Y: 5}, BLACK)
 
-
 	opponentStones := gameBoard.getNeighboringOpponentStones(Coord{X: 3, Y: 3})
 	if len(opponentStones) != 1 {
 		t.Errorf("Expected 1 neighboring opponent stone, got %d", len(opponentStones))
@@ -184,7 +183,6 @@ func TestBoardGetNeighboringOpponentStone(t *testing.T) {
 	}
 }
 
-
 func TestBoardGetLiberties(t *testing.T) {
 	gameBoard := NewBoard(9)
 
@@ -193,19 +191,18 @@ func TestBoardGetLiberties(t *testing.T) {
 	gameBoard.placeStone(Coord{X: 7, Y: 7}, WHITE)
 	gameBoard.placeStone(Coord{X: 7, Y: 8}, WHITE)
 
-	l := gameBoard.countLiberties(Coord{X: 0, Y:0})
+	l := gameBoard.countLiberties(Coord{X: 0, Y: 0})
 	if l != 2 {
 		t.Errorf("Expected 2 liberties, got %d", l)
 	}
 
-	l = gameBoard.countLiberties(Coord{X: 5, Y:5})
+	l = gameBoard.countLiberties(Coord{X: 5, Y: 5})
 	if l != 4 {
 		t.Errorf("Expected 4 liberties, got %d", l)
 	}
 
-	l = gameBoard.countLiberties(Coord{X: 7, Y:7})
+	l = gameBoard.countLiberties(Coord{X: 7, Y: 7})
 	if l != 3 {
 		t.Errorf("Expected 3 liberties, got %d", l)
 	}
 }
-

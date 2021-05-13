@@ -104,9 +104,8 @@ func (board *Board) isOnBoard(coord Coord) bool {
 	return coord.X >= 0 && coord.X <= board.Size && coord.Y >= 0 && coord.Y <= board.Size
 }
 
-
 func (board *Board) getNeighborCoords(coord Coord) []Coord {
-	unverified := []Coord{Coord{X: coord.X - 1, Y: coord.Y},Coord{X: coord.X + 1, Y: coord.Y},Coord{X: coord.X, Y: coord.Y - 1},Coord{X: coord.X, Y: coord.Y + 1}}
+	unverified := []Coord{Coord{X: coord.X - 1, Y: coord.Y}, Coord{X: coord.X + 1, Y: coord.Y}, Coord{X: coord.X, Y: coord.Y - 1}, Coord{X: coord.X, Y: coord.Y + 1}}
 	neighborCoords := []Coord{}
 	for _, c := range unverified {
 		if board.isOnBoard(c) {

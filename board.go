@@ -2,6 +2,7 @@ package main
 
 /**
 TODO:
+- detect liberties
 - capture stones
 - detect eyes
 - determine territory
@@ -32,7 +33,7 @@ type BoardInterface interface {
 	listSpacesForColor(color string) []Coord
 	placeStone(coord Coord, color string) bool
 	removeStone(coord Coord) bool
-	spaceIsFree(coord Coord) bool
+	getSpaceOwnership(coord Coord) string
 }
 
 // assert that Board implements Interface
@@ -55,12 +56,12 @@ func NewBoard(size int) Board {
 }
 
 // returns true if either player has claimed a space
-func (board *Board) spaceIsFree(coord Coord) bool {
-	return board.Spaces[coord.X][coord.Y] == FREE
+func (board *Board) getSpaceOwnership(coord Coord) string {
+	return board.Spaces[coord.X][coord.Y]
 }
 
 func (board *Board) canPlaceStone(coord Coord) bool {
-	if !board.spaceIsFree(coord) {
+	if board.getSpaceOwnership(coord) != FREE {
 		return false
 	}
 
@@ -79,7 +80,7 @@ func (board *Board) placeStone(coord Coord, color string) bool {
 }
 
 func (board *Board) removeStone(coord Coord) bool {
-	if board.spaceIsFree(coord) {
+	if board.getSpaceOwnership(coord) == FREE {
 		return false
 	}
 
@@ -97,6 +98,55 @@ func (board *Board) listSpacesForColor(color string) []Coord {
 		}
 	}
 	return spaces
+}
+
+func (board *Board) isOnBoard(coord Coord) bool {
+	return coord.X >= 0 && coord.X <= board.Size && coord.Y >= 0 && coord.Y <= board.Size
+}
+
+func (board *Board) getConnectedStones(coord Coord) ([]Coord, string) {
+	color := board.getSpaceOwnership(coord)
+	if color == FREE {
+		return nil, FREE
+	}
+
+	neighborCoords := []Coord{Coord{X: coord.X - 1, Y: coord.Y},Coord{X: coord.X + 1, Y: coord.Y},Coord{X: coord.X, Y: coord.Y - 1},Coord{X: coord.X, Y: coord.Y + 1}}
+
+	connected := []Coord{}
+
+	for _, neighborCoord := range neighborCoords {
+		if board.isOnBoard(neighborCoord) && board.getSpaceOwnership(neighborCoord) == color {
+			connected = append(connected, neighborCoord)
+		}
+	}
+
+	return connected, FREE
+}
+
+func (board *Board) getAllConnectedStones(coord Coord, connected []Coord) ([]Coord, string) {
+	color := board.getSpaceOwnership(coord)
+	if color == FREE {
+		return nil, FREE
+	}
+
+	connected = append(connected, coord)
+	neighbors, _ := board.getConnectedStones(coord)
+	if neighbors != nil {
+		for _, n := range neighbors {
+			// TODO: better duplicate checking (if c in list?)
+			isNew := true
+			for _, c := range connected {
+				if c.X == n.X && c.Y == n.Y {
+					isNew = false
+				}
+			}
+			if isNew {
+				connected, _ = board.getAllConnectedStones(n, connected)
+			}
+		}
+	}
+
+	return connected, color
 }
 
 func (board *Board) getScores() (int, int) {

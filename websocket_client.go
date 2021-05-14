@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 
 	"github.com/gorilla/websocket"
@@ -52,7 +53,13 @@ func (c *SocketClient) Read() {
 		}
 		// assign message to a function handler
 		if handler, found := c.findHandler(Event(msg.Name)); found {
-			handler(c, msg.Data)
+			dataJsonString, err := json.Marshal(msg.Data)
+			if err != nil {
+					log.Println(err)
+					return
+			}
+
+			handler(c, dataJsonString)
 		}
 	}
 	log.Println("exiting read loop")

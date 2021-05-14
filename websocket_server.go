@@ -3,6 +3,7 @@
 package main
 
 import (
+	"encoding/json"
 	"log"
 	"net/http"
 	"strconv"
@@ -10,7 +11,7 @@ import (
 
 var gameManager GameManager
 
-func onMessage(c *SocketClient, data interface{}) {
+func onMessage(c *SocketClient, data []byte) {
 	log.Printf("message: %v\n", data)
 
 	// set and write response message
@@ -23,13 +24,16 @@ type GameIdData struct {
 }
 
 type CreateGameRequest struct {
-	UserId string
+	UserID string
 }
 
-func onCreateGame(c *SocketClient, data interface{}) {
+func onCreateGame(c *SocketClient, data []byte) {
 	log.Println("Request: createGame")
-	userID := "some-user-id"
-	gameID := gameManager.CreateGame("some-user-id", c)
+
+	var req CreateGameRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	gameID := gameManager.CreateGame(userID, c)
 
 	// set and write response message
 	log.Println("Player " + userID + " created game " + strconv.Itoa(gameID))
@@ -37,11 +41,22 @@ func onCreateGame(c *SocketClient, data interface{}) {
 	c.Write()
 }
 
-func onJoinGame(c *SocketClient, data interface{}) {
+type JoinGameRequest struct {
+	UserID string
+	GameID int
+}
+
+type ErrorData struct {
+	Message string
+}
+
+func onJoinGame(c *SocketClient, data []byte) {
 	log.Println("Request: joinGame")
 
-	userID := "something"
-	gameID := 1
+	var req JoinGameRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	gameID := req.GameID
 
 	// Rejoin game if already registered, or register as part of game
 	joined := gameManager.RejoinGame(gameID, userID, c)
@@ -52,6 +67,10 @@ func onJoinGame(c *SocketClient, data interface{}) {
 		// set and write response message
 		log.Println("Player " + userID + " joined game " + strconv.Itoa(gameID))
 		c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
+		c.Write()
+	} else {
+		log.Println("Player " + userID + " could not join game " + strconv.Itoa(gameID))
+		c.send = Message{Name: "error", Data: ErrorData{Message: "cannot join game " + strconv.Itoa(gameID)}}
 		c.Write()
 	}
 }

@@ -10,7 +10,7 @@ import (
 )
 
 // Handler is a type representing functions which resolve requests.
-type Handler func(*SocketClient, interface{})
+type Handler func(*SocketClient, []byte)
 
 // Event is a type representing request names.
 type Event string

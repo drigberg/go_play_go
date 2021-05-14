@@ -59,6 +59,11 @@ func (gameManager *GameManager) JoinGame(gameID int, userID string, socketClient
 	if game == nil {
 		return false
 	}
+
+	if len(game.Players) >= 2 {
+		return false
+	}
+
 	game.M.Lock()
 	defer game.M.Unlock()
 

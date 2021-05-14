@@ -16,7 +16,8 @@ type Game struct {
 }
 
 type Player struct {
-	UserID string
+	UserID       string
+	SocketClient *SocketClient
 }
 
 // GameInterface defines methods a Game should implement

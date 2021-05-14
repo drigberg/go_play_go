@@ -17,23 +17,23 @@ type Message struct {
 // FindHandler is a type that defines handler finding functions.
 type FindHandler func(Event) (Handler, bool)
 
-// Client is a type that reads and writes on sockets.
-type Client struct {
+// SocketClient is a type that reads and writes on sockets.
+type SocketClient struct {
 	send        Message
 	socket      *websocket.Conn
 	findHandler FindHandler
 }
 
-// NewClient accepts a socket and returns an initialized Client.
-func NewClient(socket *websocket.Conn, findHandler FindHandler) *Client {
-	return &Client{
+// NewClient accepts a socket and returns an initialized SocketClient.
+func NewClient(socket *websocket.Conn, findHandler FindHandler) *SocketClient {
+	return &SocketClient{
 		socket:      socket,
 		findHandler: findHandler,
 	}
 }
 
 // Write receives messages from the channel and writes to the socket.
-func (c *Client) Write() {
+func (c *SocketClient) Write() {
 	msg := c.send
 	err := c.socket.WriteJSON(msg)
 	if err != nil {
@@ -42,7 +42,7 @@ func (c *Client) Write() {
 }
 
 // Read intercepts messages on the socket and assigns them to a handler function.
-func (c *Client) Read() {
+func (c *SocketClient) Read() {
 	var msg Message
 	for {
 		// read incoming message from socket

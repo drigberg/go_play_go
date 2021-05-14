@@ -55,8 +55,8 @@ func (c *SocketClient) Read() {
 		if handler, found := c.findHandler(Event(msg.Name)); found {
 			dataJsonString, err := json.Marshal(msg.Data)
 			if err != nil {
-					log.Println(err)
-					return
+				log.Println(err)
+				return
 			}
 
 			handler(c, dataJsonString)

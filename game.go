@@ -86,6 +86,9 @@ func (game *Game) GetInfo(userID string) GameInfo {
 	for _, player := range game.Players {
 		players = append(players, player)
 	}
+
+	// TODO: end game if no possible moves left
+
 	return GameInfo{
 		Players:         players,
 		PlayerColor:     color,

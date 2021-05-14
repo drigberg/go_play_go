@@ -26,7 +26,7 @@ var _ GameManagerInterface = (*GameManager)(nil)
 // NewServer creates a GameManager instance
 func NewGameManager() GameManager {
 	return GameManager{
-		games: make(map[int]*Game),
+		games:         make(map[int]*Game),
 		gameIDPointer: 1,
 	}
 }

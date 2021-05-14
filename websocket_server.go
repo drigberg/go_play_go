@@ -95,6 +95,11 @@ func onJoinGame(c *SocketClient, data []byte) {
 	c.Write()
 }
 
+// TODO: onPlaceStone
+// TODO: onPass
+// TODO: onMessage
+// TODO: onGetInfo (check if player is in room first)
+
 func RunServer() {
 	router := NewRouter()
 	gameManager = NewGameManager()

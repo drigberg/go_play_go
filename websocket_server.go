@@ -27,12 +27,26 @@ type CreateGameRequest struct {
 	UserID string
 }
 
+type ErrorData struct {
+	Message string
+}
+
 func onCreateGame(c *SocketClient, data []byte) {
 	log.Println("Request: createGame")
 
+	// parse and validate request
 	var req CreateGameRequest
 	json.Unmarshal(data, &req)
 	userID := req.UserID
+
+	if userID == "" {
+		log.Println("Invalid request format")
+		c.send = Message{Name: "error", Data: ErrorData{Message: "Invalid request format"}}
+		c.Write()
+		return
+	}
+
+	// Create game
 	gameID := gameManager.CreateGame(userID, c)
 
 	// set and write response message
@@ -46,33 +60,39 @@ type JoinGameRequest struct {
 	GameID int
 }
 
-type ErrorData struct {
-	Message string
-}
-
 func onJoinGame(c *SocketClient, data []byte) {
 	log.Println("Request: joinGame")
 
+	// parse and validate request
 	var req JoinGameRequest
 	json.Unmarshal(data, &req)
 	userID := req.UserID
 	gameID := req.GameID
+
+	if userID == "" || gameID <= 0 {
+		log.Println("Invalid request format")
+		c.send = Message{Name: "error", Data: ErrorData{Message: "Invalid request format"}}
+		c.Write()
+		return
+	}
 
 	// Rejoin game if already registered, or register as part of game
 	joined := gameManager.RejoinGame(gameID, userID, c)
 	if !joined {
 		joined = gameManager.JoinGame(gameID, userID, c)
 	}
-	if joined {
-		// set and write response message
-		log.Println("Player " + userID + " joined game " + strconv.Itoa(gameID))
-		c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
-		c.Write()
-	} else {
+
+	if !joined {
 		log.Println("Player " + userID + " could not join game " + strconv.Itoa(gameID))
 		c.send = Message{Name: "error", Data: ErrorData{Message: "cannot join game " + strconv.Itoa(gameID)}}
 		c.Write()
+		return
 	}
+
+	// set and write response message
+	log.Println("Player " + userID + " joined game " + strconv.Itoa(gameID))
+	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
+	c.Write()
 }
 
 func RunServer() {

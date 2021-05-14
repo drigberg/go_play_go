@@ -27,6 +27,7 @@ var _ GameManagerInterface = (*GameManager)(nil)
 func NewGameManager() GameManager {
 	return GameManager{
 		games: make(map[int]*Game),
+		gameIDPointer: 1,
 	}
 }
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -15,6 +16,7 @@ type GameManager struct {
 // GameManagerInterface defines methods a Game should implement
 type GameManagerInterface interface {
 	CreateGame(userID string, socketClient *SocketClient) int
+	GetGameInfo(gameID int, userID string) (GameInfo, error)
 	JoinGame(gameID int, userID string, socketClient *SocketClient) bool
 	RejoinGame(gameID int, userID string, socketClient *SocketClient) bool
 	PlaceStone(gameID int, userID string, coord Coord) bool
@@ -46,10 +48,11 @@ func (gameManager *GameManager) CreateGame(userID string, socketClient *SocketCl
 	players[userID] = &player
 
 	gameManager.games[gameManager.gameIDPointer] = &Game{
-		ID:      gameManager.gameIDPointer,
-		Players: players,
-		Turn:    0,
-		Board:   NewBoard(9),
+		ID:            gameManager.gameIDPointer,
+		FirstPlayerID: userID,
+		Players:       players,
+		Turn:          1,
+		Board:         NewBoard(9),
 	}
 
 	return gameManager.gameIDPointer
@@ -87,6 +90,15 @@ func (gameManager *GameManager) RejoinGame(gameID int, userID string, socketClie
 	defer game.M.Unlock()
 	game.Players[userID].SocketClient = socketClient
 	return true
+}
+
+func (gameManager *GameManager) GetGameInfo(gameID int, userID string) (GameInfo, error) {
+	game := gameManager.games[gameID]
+	// return false if no game or player is not part of game
+	if game == nil || game.Players[userID] == nil {
+		return GameInfo{}, errors.New("Cannot get game info")
+	}
+	return game.GetInfo(userID), nil
 }
 
 func (gameManager *GameManager) PlaceStone(gameID int, userID string, coord Coord) bool {

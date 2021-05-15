@@ -34,10 +34,12 @@ type Spaces struct {
 }
 
 type GameInfo struct {
-	Players         []*Player
-	PlayerColor     string
-	IsOver          bool
+	Turn            int
 	Scores          Scores
+	IsOver          bool
+	PlayerColor     string
+	PlayerTurn      bool
+	OpponentID      string
 	AvailableSpaces []Coord
 	Spaces          Spaces
 }
@@ -82,20 +84,26 @@ func (game *Game) GetInfo(userID string) GameInfo {
 		BLACK: game.Board.ListSpacesForColor(BLACK),
 		WHITE: game.Board.ListSpacesForColor(WHITE),
 	}
-	players := []*Player{}
+	var opponentId string
 	for _, player := range game.Players {
-		players = append(players, player)
+		if player.UserID != userID {
+			opponentId = player.UserID
+		}
 	}
+
+	playerTurn := game.IsTurn(userID)
 
 	// TODO: end game if no possible moves left
 
 	return GameInfo{
-		Players:         players,
+		OpponentID:      opponentId,
 		PlayerColor:     color,
+		PlayerTurn:      playerTurn,
 		IsOver:          game.IsOver,
 		Scores:          game.Board.GetScores(),
 		AvailableSpaces: game.Board.GetAvailableSpaces(color),
 		Spaces:          Spaces,
+		Turn:            game.Turn,
 	}
 }
 

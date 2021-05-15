@@ -31,8 +31,12 @@ type ErrorDataJoinGame struct {
 	Type string "joinGame"
 }
 
+type ErrorDataGetGameInfo struct {
+	Type string "getGameINfo"
+}
+
 type ErrorData400 struct {
-	Type string "400"
+	Type    string "400"
 	Message string
 }
 
@@ -40,7 +44,7 @@ func create400Error(message string) Message {
 	return Message{
 		Name: "error",
 		Data: ErrorData400{
-			Type: "400",
+			Type:    "400",
 			Message: message,
 		},
 	}
@@ -51,6 +55,15 @@ func createJoinGameError() Message {
 		Name: "error",
 		Data: ErrorDataJoinGame{
 			Type: "joinGame",
+		},
+	}
+}
+
+func createGetGameInfoError() Message {
+	return Message{
+		Name: "error",
+		Data: ErrorDataGetGameInfo{
+			Type: "getGameInfo",
 		},
 	}
 }
@@ -119,6 +132,42 @@ func onJoinGame(c *SocketClient, data []byte) {
 	c.Write()
 }
 
+type GetGameInfoRequest struct {
+	UserID string
+	GameID int
+}
+
+func onGetGameInfo(c *SocketClient, data []byte) {
+	log.Println("Request: getGameInfo")
+
+	// parse and validate request
+	var req GetGameInfoRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	gameID := req.GameID
+
+	if userID == "" || gameID <= 0 {
+		log.Println("Invalid request format")
+		c.send = create400Error("Invalid request format")
+		c.Write()
+		return
+	}
+
+	gameInfo, err := gameManager.GetGameInfo(gameID, userID)
+
+	if err != nil {
+		log.Println("Unable to fetch game info")
+		c.send = createGetGameInfoError()
+		c.Write()
+		return
+	}
+
+	// set and write response message
+	log.Println("Sending game info to player " + userID)
+	c.send = Message{Name: "gameInfo", Data: gameInfo}
+	c.Write()
+}
+
 // TODO: onPlaceStone
 // TODO: onPass
 // TODO: onMessage
@@ -130,6 +179,7 @@ func RunServer() {
 	router.Handle("message", onMessage)
 	router.Handle("createGame", onCreateGame)
 	router.Handle("joinGame", onJoinGame)
+	router.Handle("getGameInfo", onGetGameInfo)
 
 	// handle all requests to /, upgrade to WebSocket via our router handler.
 	http.Handle("/", router)

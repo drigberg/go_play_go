@@ -1,11 +1,5 @@
 package main
 
-/**
-TODO:
-- determine territory
-- count points
-*/
-
 const (
 	FREE  = "FREE"
 	WHITE = "WHITE"
@@ -40,7 +34,7 @@ func coordIsInList(coord Coord, coords []Coord) bool {
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
 	PlaceStone(coord Coord, color string) bool
-	GetScores() Scores
+	GetScoreData() ScoreData
 	GetAvailableSpaces(color string) []Coord
 	ListSpacesForColor(color string) []Coord
 }
@@ -257,20 +251,21 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 	return connected
 }
 
-func (board *Board) getFreeSpaces() []Coord {
+func (board *Board) getFreeSpaces(spaces [][]string) []Coord {
 	coords := []Coord{}
-	for x := 0; x < len(board.Spaces); x++ {
-		for y := 0; y < len(board.Spaces[x]); y++ {
-			if board.Spaces[x][y] == FREE {
+	for x := 0; x < len(spaces); x++ {
+		for y := 0; y < len(spaces[x]); y++ {
+			if spaces[x][y] == FREE {
 				coords = append(coords, Coord{X: x, Y: y})
 			}
 		}
 	}
+
 	return coords
 }
 
 func (board *Board) getGroupedFreeSpaces() [][]Coord {
-	coords := board.getFreeSpaces()
+	coords := board.getFreeSpaces(board.Spaces)
 	grouped := []Coord{}
 	groups := [][]Coord{}
 
@@ -383,15 +378,100 @@ func (board *Board) placeKomi(territories Territories) (Territories, []Coord) {
 	return territories, komi
 }
 
-func (board *Board) GetScores() Scores {
-	// territories := board.getTerritories()
-	// Place 4 komi stones in black territory
-	// Fill the free spaces with each player's bank of 180 stones
-	// Locate the final free spaces to determine the winner
-	// Count free spaces + remaining stones to determine the point difference
+type StoneCounts struct {
+	BLACK int
+	WHITE int
+}
 
-	return Scores{
-		BLACK: 0,
-		WHITE: 0,
+func (board *Board) countStones(komi []Coord) StoneCounts {
+	numBlackStones := 0
+	numWhiteStones := len(komi)
+
+	for x := 0; x < len(board.Spaces); x++ {
+		for y := 0; y < len(board.Spaces[x]); y++ {
+			if board.Spaces[x][y] == BLACK {
+				numBlackStones++
+			} else if board.Spaces[x][y] == WHITE {
+				numWhiteStones++
+			}
+		}
 	}
+
+	return StoneCounts{
+		BLACK: numBlackStones,
+		WHITE: numWhiteStones,
+	}
+}
+
+func (board *Board) copySpaces() [][]string {
+	spacesCopy := make([][]string, board.Size)
+	for x := 0; x < board.Size; x++ {
+		spacesCopy[x] = make([]string, board.Size)
+		copy(spacesCopy[x], board.Spaces[x])
+	}
+	return spacesCopy
+}
+
+func (board *Board) fillBoard(territories Territories, komi []Coord) ([][]string, StoneCounts) {
+	totalsStonesPerPlayer := (board.Size*board.Size - 1) / 2
+	stoneCounts := board.countStones(komi)
+	remaining := StoneCounts{
+		BLACK: totalsStonesPerPlayer - stoneCounts.BLACK,
+		WHITE: totalsStonesPerPlayer - stoneCounts.WHITE,
+	}
+	spacesCopy := board.copySpaces()
+
+	for _, c := range komi {
+		spacesCopy[c.X][c.Y] = WHITE
+	}
+
+	for _, group := range territories.BLACK {
+		for _, c := range group {
+			if remaining.BLACK > 0 {
+				spacesCopy[c.X][c.Y] = BLACK
+				remaining.BLACK--
+			}
+		}
+	}
+
+	for _, group := range territories.WHITE {
+		for _, c := range group {
+			if remaining.WHITE > 0 {
+				spacesCopy[c.X][c.Y] = WHITE
+				remaining.WHITE--
+			}
+		}
+	}
+
+	return spacesCopy, remaining
+}
+
+type ScoreData struct {
+	Winner          string
+	PointDifference int
+}
+
+func (board *Board) countPoints(spaces [][]string, remaining StoneCounts) ScoreData {
+	freeSpaces := board.getFreeSpaces(spaces)
+	var winner string
+	if remaining.BLACK == 0 {
+		winner = "BLACK"
+	} else {
+		winner = "WHITE"
+	}
+	// one remaining number is 0, so we can just add both to get the number left for the loser
+	pointDifference := len(freeSpaces) + remaining.BLACK + remaining.WHITE
+	return ScoreData{
+		Winner:          winner,
+		PointDifference: pointDifference,
+	}
+}
+
+// GetScore() tallies points using the Ing method, with 4 komi placed in black territory
+func (board *Board) GetScoreData() ScoreData {
+	territories := board.getTerritories()
+	territories, komi := board.placeKomi(territories)
+	spaces, remaining := board.fillBoard(territories, komi)
+	scoreData := board.countPoints(spaces, remaining)
+	return scoreData
 }

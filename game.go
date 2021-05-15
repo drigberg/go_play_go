@@ -125,12 +125,12 @@ func (game *Game) GetInfo(userID string) GameInfo {
 	playerTurn := game.IsTurn(userID)
 
 	return GameInfo{
-		Size:            game.Board.Size,
-		OpponentID:      opponentId,
-		PlayerColor:     color,
-		PlayerTurn:      playerTurn,
-		State:           game.State,
-		Scores:          game.Board.GetScores(),
+		Size:        game.Board.Size,
+		OpponentID:  opponentId,
+		PlayerColor: color,
+		PlayerTurn:  playerTurn,
+		State:       game.State,
+		// Scores:          game.Board.GetScores(),
 		AvailableSpaces: game.Board.GetAvailableSpaces(color),
 		Spaces:          Spaces,
 		Turn:            game.Turn,

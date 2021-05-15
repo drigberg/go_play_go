@@ -11,28 +11,6 @@ func TestBoardNew(t *testing.T) {
 	}
 }
 
-func TestBoardGetScoreEmpty(t *testing.T) {
-	board := NewBoard(9)
-	scores := board.GetScores()
-	if scores.WHITE != 0 {
-		t.Errorf("Expected white to have score 0, got %d", scores.WHITE)
-	}
-	if scores.BLACK != 0 {
-		t.Errorf("Expected black to have score 0, got %d", scores.BLACK)
-	}
-
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
-
-	if len(whiteSpaces) != 0 {
-		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
-	}
-
-	if len(blackSpaces) != 0 {
-		t.Errorf("Expected no black spaces, got %d", len(blackSpaces))
-	}
-}
-
 func TestBoardPlaceStone(t *testing.T) {
 	board := NewBoard(9)
 
@@ -401,7 +379,7 @@ func TestBoardCaptureDonut(t *testing.T) {
 
 func TestBoardGetFreeSpaces(t *testing.T) {
 	board := NewBoard(9)
-	freeSpaces := board.getFreeSpaces()
+	freeSpaces := board.getFreeSpaces(board.Spaces)
 	if len(freeSpaces) != 81 {
 		t.Errorf("Expected 81 free spaces, got %d", len(freeSpaces))
 	}
@@ -412,7 +390,7 @@ func TestBoardGetFreeSpaces(t *testing.T) {
 	board.PlaceStone(Coord{X: 3, Y: 4}, BLACK)
 	board.PlaceStone(Coord{X: 4, Y: 3}, BLACK)
 
-	freeSpaces = board.getFreeSpaces()
+	freeSpaces = board.getFreeSpaces(board.Spaces)
 	if len(freeSpaces) != 77 {
 		t.Errorf("Expected 77 free spaces, got %d", len(freeSpaces))
 	}
@@ -534,5 +512,143 @@ func TestBoardPlaceKomi(t *testing.T) {
 
 	if len(komi) != 4 {
 		t.Errorf("Expected 4 komi, got %d", len(komi))
+	}
+}
+
+func TestBoardCopySpaces(t *testing.T) {
+	board := NewBoard(9)
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 5, Y: 5}, WHITE)
+
+	spacesCopy := board.copySpaces()
+	copyIsEqual := true
+	for x := 0; x < len(board.Spaces); x++ {
+		for y := 0; y < len(board.Spaces[x]); y++ {
+			if board.Spaces[x][y] != spacesCopy[x][y] {
+				copyIsEqual = false
+			}
+		}
+	}
+
+	if !copyIsEqual {
+		t.Errorf("Expected spacesCopy to equal board.Spaces")
+	}
+
+	spacesCopy[0][0] = WHITE
+
+	if board.Spaces[0][0] == WHITE {
+		t.Errorf("board.Spaces should not have been mutated when spacesCopy was changed")
+	}
+}
+
+func TestBoardCountStones(t *testing.T) {
+	board := NewBoard(9)
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 5, Y: 5}, WHITE)
+	komi := []Coord{}
+	stoneCounts := board.countStones(komi)
+
+	if stoneCounts.BLACK != 1 {
+		t.Errorf("Expected 1 black stone, got %d", stoneCounts.BLACK)
+	}
+
+	if stoneCounts.WHITE != 1 {
+		t.Errorf("Expected 1 white stone, got %d", stoneCounts.WHITE)
+	}
+
+	board.PlaceStone(Coord{X: 3, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 6, Y: 5}, WHITE)
+	komi = []Coord{Coord{X: 0, Y: 0}, Coord{X: 1, Y: 0}}
+	stoneCounts = board.countStones(komi)
+
+	if stoneCounts.BLACK != 2 {
+		t.Errorf("Expected 2 black stones, got %d", stoneCounts.BLACK)
+	}
+
+	if stoneCounts.WHITE != 4 {
+		t.Errorf("Expected 4 white stones, got %d", stoneCounts.WHITE)
+	}
+}
+
+func TestBoardFillBoard(t *testing.T) {
+	board := NewBoard(9)
+	for x := 0; x < 9; x++ {
+		board.PlaceStone(Coord{X: x, Y: 3}, BLACK)
+		board.PlaceStone(Coord{X: x, Y: 4}, WHITE)
+	}
+
+	territories := board.getTerritories()
+
+	if len(territories.WHITE) != 1 {
+		t.Errorf("Expected 1 white territory, got %d", len(territories.WHITE))
+	}
+
+	if len(territories.BLACK) != 1 {
+		t.Errorf("Expected 1 black territory, got %d", len(territories.BLACK))
+	}
+
+	territories, komi := board.placeKomi(territories)
+
+	if len(territories.WHITE) != 1 {
+		t.Errorf("Expected 1 white territory, got %d", len(territories.WHITE))
+	}
+
+	if len(territories.BLACK) != 1 {
+		t.Errorf("Expected 1 black territory, got %d", len(territories.BLACK))
+	}
+
+	if len(komi) != 4 {
+		t.Errorf("Expected 4 komi, got %d", len(komi))
+	}
+
+	spaces, remaining := board.fillBoard(territories, komi)
+	freeSpaces := board.getFreeSpaces(spaces)
+
+	if len(freeSpaces) != 9 {
+		t.Errorf("Expected 9 free spaces, got %d", len(freeSpaces))
+	}
+
+	if remaining.BLACK != 8 {
+		t.Errorf("Expected 8 black stones, got %d", remaining.BLACK)
+	}
+
+	if remaining.WHITE != 0 {
+		t.Errorf("Expected 0 white stones, got %d", remaining.WHITE)
+	}
+}
+
+func TestBoardGetScoreDataBasic(t *testing.T) {
+	board := NewBoard(9)
+	for x := 0; x < 9; x++ {
+		board.PlaceStone(Coord{X: x, Y: 3}, BLACK)
+		board.PlaceStone(Coord{X: x, Y: 4}, WHITE)
+	}
+
+	scoreData := board.GetScoreData()
+
+	if scoreData.Winner != WHITE {
+		t.Errorf("Expected white to win")
+	}
+
+	if scoreData.PointDifference != 17 {
+		t.Errorf("Expected white to win by 17 points, got %d", scoreData.PointDifference)
+	}
+}
+
+func TestBoardGetScoreDataEyes(t *testing.T) {
+	board := NewBoard(9)
+	for x := 0; x < 9; x++ {
+		board.PlaceStone(Coord{X: x, Y: 3}, BLACK)
+		board.PlaceStone(Coord{X: x, Y: 4}, WHITE)
+	}
+
+	scoreData := board.GetScoreData()
+
+	if scoreData.Winner != WHITE {
+		t.Errorf("Expected white to win")
+	}
+
+	if scoreData.PointDifference != 17 {
+		t.Errorf("Expected white to win by 17 points, got %d", scoreData.PointDifference)
 	}
 }

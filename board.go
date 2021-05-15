@@ -264,10 +264,28 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 	return connected
 }
 
+func (board *Board) getFreeSpaces() []Coord {
+	coords := []Coord{}
+	for x := 0; x < len(board.Spaces); x++ {
+		for y := 0; y < len(board.Spaces[x]); y++ {
+			if board.Spaces[x][y] == FREE {
+				coords = append(coords, Coord{X: x, Y: y})
+			}
+		}
+	}
+	return coords
+}
+
 func (board *Board) GetScores() Scores {
-	// TODO: tally points
-	// whiteScore := 0
-	// blackScore: := 0
+	// freeSpaces := board.getFreeSpaces()
+
+	// Split free spaces into groups
+	// Assign each free group to a color
+	// Place 4 komi stones in black territory
+	// Fill the free spaces with each player's bank of 180 stones
+	// Locate the final free spaces to determine the winner
+	// Count free spaces + remaining stones to determine the point difference
+
 	return Scores{
 		BLACK: 0,
 		WHITE: 0,

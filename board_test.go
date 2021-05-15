@@ -398,3 +398,22 @@ func TestBoardCaptureDonut(t *testing.T) {
 		t.Errorf("Expected 0 black spaces, got %d", len(blackSpaces))
 	}
 }
+
+func TestBoardGetFreeSpaces(t *testing.T) {
+	gameBoard := NewBoard(9)
+	freeSpaces := gameBoard.getFreeSpaces()
+	if len(freeSpaces) != 81 {
+		t.Errorf("Expected 81 free spaces, got %d", len(freeSpaces))
+	}
+
+	// place stones and check again
+	gameBoard.PlaceStone(Coord{X: 2, Y: 4}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 3}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 4}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 4, Y: 3}, BLACK)
+
+	freeSpaces = gameBoard.getFreeSpaces()
+	if len(freeSpaces) != 77 {
+		t.Errorf("Expected 77 free spaces, got %d", len(freeSpaces))
+	}
+}

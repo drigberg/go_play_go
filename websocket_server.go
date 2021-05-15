@@ -97,6 +97,17 @@ type JoinGameRequest struct {
 	GameID int
 }
 
+func sendOtherPlayerUpdate(gameID int, userID string) {
+	otherPlayer, err := gameManager.GetOtherPlayer(gameID, userID)
+	if err == nil {
+		log.Println("Telling player " + otherPlayer.UserID + " to refresh")
+		otherPlayer.SocketClient.send = Message{Name: "update", Data: nil}
+		otherPlayer.SocketClient.Write()
+	} else {
+		log.Println("No other player found!")
+	}
+}
+
 func onJoinGame(c *SocketClient, data []byte) {
 	log.Println("Request: joinGame")
 
@@ -131,13 +142,7 @@ func onJoinGame(c *SocketClient, data []byte) {
 	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
 	c.Write()
 
-	otherPlayer, err := gameManager.GetOtherPlayer(gameID, userID)
-	if err == nil {
-		otherPlayer.SocketClient.send = Message{Name: "update", Data: nil}
-		otherPlayer.SocketClient.Write()
-	} else {
-		log.Println("No other player found!")
-	}
+	sendOtherPlayerUpdate(gameID, userID)
 }
 
 type GetGameInfoRequest struct {
@@ -176,7 +181,42 @@ func onGetGameInfo(c *SocketClient, data []byte) {
 	c.Write()
 }
 
-// TODO: onPlaceStone
+type GetPlaceStoneRequest struct {
+	UserID string
+	GameID int
+	Coord  Coord
+}
+
+func onPlaceStone(c *SocketClient, data []byte) {
+	log.Println("Request: placeStone")
+
+	// parse and validate request
+	var req GetPlaceStoneRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	gameID := req.GameID
+	coord := req.Coord
+
+	if userID == "" || gameID <= 0 || coord.X < 0 || coord.Y < 0 {
+		log.Println("Invalid request format")
+		c.send = create400Error("Invalid request format")
+		c.Write()
+		return
+	}
+
+	placed := gameManager.PlaceStone(gameID, userID, coord)
+	if !placed {
+		log.Println("Unable to play move")
+		c.send = create400Error("Unable to play move")
+		c.Write()
+		return
+	}
+
+	c.send = Message{Name: "update", Data: nil}
+	c.Write()
+	sendOtherPlayerUpdate(gameID, userID)
+}
+
 // TODO: onPass
 // TODO: onMessage
 // TODO: onGetInfo (check if player is in room first)
@@ -188,6 +228,7 @@ func RunServer() {
 	router.Handle("createGame", onCreateGame)
 	router.Handle("joinGame", onJoinGame)
 	router.Handle("getGameInfo", onGetGameInfo)
+	router.Handle("placeStone", onPlaceStone)
 
 	// handle all requests to /, upgrade to WebSocket via our router handler.
 	http.Handle("/", router)

@@ -108,9 +108,6 @@ func (gameManager *GameManager) PlaceStone(gameID int, userID string, coord Coor
 		return false
 	}
 
-	game.M.Lock()
-	defer game.M.Unlock()
-
 	placed := game.PlaceStone(userID, coord)
 	return placed
 }

@@ -65,22 +65,29 @@ func (game *Game) GetPlayerColor(userID string) string {
 }
 
 func (game *Game) PlaceStone(userID string, coord Coord) bool {
+	game.M.Lock()
+	defer game.M.Unlock()
+
 	color := game.GetPlayerColor(userID)
 	placed := game.Board.PlaceStone(coord, color)
 	if placed {
 		game.LastPlayerPassed = false
+		game.Turn++
 	}
 	return placed
 }
 
 func (game *Game) Pass(userID string) {
+	game.M.Lock()
+	defer game.M.Unlock()
+
 	// If both players pass, the game is over
 	if game.LastPlayerPassed {
 		game.IsOver = true
 	} else {
 		game.LastPlayerPassed = true
 	}
-	game.Turn += 1
+	game.Turn++
 }
 
 func (game *Game) GetOtherPlayer(userID string) (*Player, error) {

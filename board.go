@@ -249,7 +249,6 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 	neighbors := board.getConnectedStones(coord, color)
 	if neighbors != nil {
 		for _, n := range neighbors {
-			// TODO: better duplicate checking (if c in list?)
 			isNew := true
 			for _, c := range connected {
 				if c.X == n.X && c.Y == n.Y {

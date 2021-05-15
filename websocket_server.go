@@ -219,7 +219,6 @@ func onPlaceStone(c *SocketClient, data []byte) {
 
 // TODO: onPass
 // TODO: onMessage
-// TODO: onGetInfo (check if player is in room first)
 
 func RunServer() {
 	router := NewRouter()

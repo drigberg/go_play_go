@@ -15,7 +15,7 @@ type GameManager struct {
 
 // GameManagerInterface defines methods a Game should implement
 type GameManagerInterface interface {
-	CreateGame(userID string, socketClient *SocketClient) int
+	CreateGame(userID string, size int, socketClient *SocketClient) int
 	GetGameInfo(gameID int, userID string) (GameInfo, error)
 	GetOtherPlayer(gameID int, userID string) (*Player, error)
 	JoinGame(gameID int, userID string, socketClient *SocketClient) bool
@@ -34,7 +34,7 @@ func NewGameManager() GameManager {
 	}
 }
 
-func (gameManager *GameManager) CreateGame(userID string, socketClient *SocketClient) int {
+func (gameManager *GameManager) CreateGame(userID string, size int, socketClient *SocketClient) int {
 	gameManager.M.Lock()
 	defer gameManager.M.Unlock()
 	defer func() { gameManager.gameIDPointer++ }()
@@ -53,7 +53,7 @@ func (gameManager *GameManager) CreateGame(userID string, socketClient *SocketCl
 		FirstPlayerID: userID,
 		Players:       players,
 		Turn:          1,
-		Board:         NewBoard(9),
+		Board:         NewBoard(size),
 	}
 
 	return gameManager.gameIDPointer

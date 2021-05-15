@@ -25,6 +25,7 @@ type GameIdData struct {
 
 type CreateGameRequest struct {
 	UserID string
+	Size   int
 }
 
 type ErrorDataJoinGame struct {
@@ -75,8 +76,9 @@ func onCreateGame(c *SocketClient, data []byte) {
 	var req CreateGameRequest
 	json.Unmarshal(data, &req)
 	userID := req.UserID
+	size := req.Size
 
-	if userID == "" {
+	if userID == "" || (size != 9 && size != 13 && size != 19) {
 		log.Println("Invalid request format")
 		c.send = create400Error("Invalid request format")
 		c.Write()
@@ -84,7 +86,7 @@ func onCreateGame(c *SocketClient, data []byte) {
 	}
 
 	// Create game
-	gameID := gameManager.CreateGame(userID, c)
+	gameID := gameManager.CreateGame(userID, size, c)
 
 	// set and write response message
 	log.Println("Player " + userID + " created game " + strconv.Itoa(gameID))

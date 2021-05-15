@@ -40,6 +40,7 @@ type Spaces struct {
 }
 
 type GameInfo struct {
+	Size            int
 	Turn            int
 	Scores          Scores
 	IsOver          bool
@@ -118,6 +119,7 @@ func (game *Game) GetInfo(userID string) GameInfo {
 	// TODO: end game if no possible moves left
 
 	return GameInfo{
+		Size:            game.Board.Size,
 		OpponentID:      opponentId,
 		PlayerColor:     color,
 		PlayerTurn:      playerTurn,

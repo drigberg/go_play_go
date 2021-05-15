@@ -359,9 +359,32 @@ func (board *Board) getTerritories() Territories {
 	}
 }
 
+func placeSingleKomiInGroup(group []Coord) ([]Coord, Coord) {
+	komi := group[0]
+	group = group[1:]
+	return group, komi
+}
+
+func (board *Board) placeKomi(territories Territories) (Territories, []Coord) {
+	komi := []Coord{}
+	for len(territories.BLACK) > 0 {
+		for len(territories.BLACK[0]) > 0 {
+			komi = append(komi, territories.BLACK[0][0])
+			territories.BLACK[0] = territories.BLACK[0][1:]
+			if len(territories.BLACK[0]) == 0 {
+				// remove group if empty
+				territories.BLACK = territories.BLACK[1:]
+			}
+			if len(komi) == 4 {
+				return territories, komi
+			}
+		}
+	}
+	return territories, komi
+}
+
 func (board *Board) GetScores() Scores {
 	// territories := board.getTerritories()
-
 	// Place 4 komi stones in black territory
 	// Fill the free spaces with each player's bank of 180 stones
 	// Locate the final free spaces to determine the winner

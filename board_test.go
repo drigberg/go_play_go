@@ -430,6 +430,7 @@ func TestBoardGroupFreeSpaces(t *testing.T) {
 		t.Errorf("Expected 81 free spaces in group, got %d", len(groups[0]))
 	}
 
+	// Seal off a white corner
 	board.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
 	board.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
 	board.PlaceStone(Coord{X: 2, Y: 2}, WHITE)
@@ -453,10 +454,10 @@ func TestBoardGroupFreeSpaces(t *testing.T) {
 
 func TestBoardGetTerritories(t *testing.T) {
 	board := NewBoard(9)
-	territories := board.getTerritories()
-
 	board.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
 	board.PlaceStone(Coord{X: 5, Y: 5}, BLACK)
+
+	territories := board.getTerritories()
 
 	if len(territories.BLACK) != 0 {
 		t.Errorf("Expected 0 black territories, got %d", len(territories.BLACK))
@@ -466,6 +467,7 @@ func TestBoardGetTerritories(t *testing.T) {
 		t.Errorf("Expected 0 white territories, got %d", len(territories.WHITE))
 	}
 
+	// Seal off a white corner
 	board.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
 	board.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
 	board.PlaceStone(Coord{X: 2, Y: 2}, WHITE)
@@ -483,6 +485,54 @@ func TestBoardGetTerritories(t *testing.T) {
 			t.Errorf("Expected 4 free spaces in white territory 0, got %d", len(territories.WHITE[0]))
 		}
 	} else {
-		t.Errorf("Expected 1 white territories, got %d", len(territories.WHITE))
+		t.Errorf("Expected 1 white territory, got %d", len(territories.WHITE))
+	}
+}
+
+func TestBoardPlaceKomi(t *testing.T) {
+	board := NewBoard(9)
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 5, Y: 5}, WHITE)
+
+	territories := board.getTerritories()
+	territories, komi := board.placeKomi(territories)
+
+	if len(territories.BLACK) != 0 {
+		t.Errorf("Expected 0 black territories, got %d", len(territories.BLACK))
+	}
+
+	if len(territories.WHITE) != 0 {
+		t.Errorf("Expected 0 white territories, got %d", len(territories.WHITE))
+	}
+
+	if len(komi) != 0 {
+		t.Errorf("Expected 0 komi, got %d", len(komi))
+	}
+
+	// seal off a black corner
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
+	board.PlaceStone(Coord{X: 2, Y: 2}, BLACK)
+	board.PlaceStone(Coord{X: 2, Y: 3}, BLACK)
+	board.PlaceStone(Coord{X: 1, Y: 3}, BLACK)
+	board.PlaceStone(Coord{X: 0, Y: 3}, BLACK)
+
+	territories = board.getTerritories()
+	territories, komi = board.placeKomi(territories)
+
+	if len(territories.WHITE) != 0 {
+		t.Errorf("Expected 0 white territories, got %d", len(territories.BLACK))
+	}
+
+	if len(territories.BLACK) == 1 {
+		if len(territories.BLACK[0]) != 2 {
+			t.Errorf("Expected 2 free spaces in black territory 0, got %d", len(territories.BLACK[0]))
+		}
+	} else {
+		t.Errorf("Expected 1 black territory, got %d", len(territories.WHITE))
+	}
+
+	if len(komi) != 4 {
+		t.Errorf("Expected 4 komi, got %d", len(komi))
 	}
 }

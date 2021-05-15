@@ -102,8 +102,10 @@ func sendOtherPlayerUpdate(gameID string, userID string) {
 	otherPlayer, err := gameManager.GetOtherPlayer(gameID, userID)
 	if err == nil {
 		log.Println("Telling player " + otherPlayer.UserID + " to refresh")
-		otherPlayer.SocketClient.send = Message{Name: "update", Data: nil}
-		otherPlayer.SocketClient.Write()
+		if otherPlayer.SocketClient != nil {
+			otherPlayer.SocketClient.send = Message{Name: "update", Data: nil}
+			otherPlayer.SocketClient.Write()
+		}
 	} else {
 		log.Println("No other player found!")
 	}
@@ -141,6 +143,44 @@ func onJoinGame(c *SocketClient, data []byte) {
 	// set and write response message
 	log.Println("Player " + userID + " joined game " + gameID)
 	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
+	c.Write()
+
+	sendOtherPlayerUpdate(gameID, userID)
+}
+
+type LeaveGameRequest struct {
+	UserID string
+	GameID string
+}
+
+func onLeaveGame(c *SocketClient, data []byte) {
+	log.Println("Request: leaveGame")
+
+	// parse and validate request
+	var req LeaveGameRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	gameID := req.GameID
+
+	if userID == "" || gameID == "" {
+		log.Println("Invalid request format")
+		c.send = create400Error("Invalid request format")
+		c.Write()
+		return
+	}
+
+	// Mark game as over
+	left := gameManager.LeaveGame(gameID, userID)
+	if !left {
+		log.Println("Player " + userID + " could not leave game " + gameID)
+		c.send = create400Error("Unable to leave game")
+		c.Write()
+		return
+	}
+
+	// set and write response message
+	log.Println("Player " + userID + " left game " + gameID)
+	c.send = Message{Name: "gameLeft", Data: nil}
 	c.Write()
 
 	sendOtherPlayerUpdate(gameID, userID)
@@ -263,6 +303,7 @@ func RunServer() {
 	router.Handle("getGameInfo", onGetGameInfo)
 	router.Handle("placeStone", onPlaceStone)
 	router.Handle("pass", onPass)
+	router.Handle("leaveGame", onLeaveGame)
 
 	// handle all requests to /, upgrade to WebSocket via our router handler.
 	http.Handle("/", router)

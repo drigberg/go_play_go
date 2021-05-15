@@ -19,8 +19,10 @@ type GameManagerInterface interface {
 	CreateGame(userID string, size int, socketClient *SocketClient) *Game
 	GetGameInfo(gameID string, userID string) (GameInfo, error)
 	GetOtherPlayer(gameID string, userID string) (*Player, error)
+	LeaveGame(gameID string, userID string) bool
 	JoinGame(gameID string, userID string, socketClient *SocketClient) bool
 	RejoinGame(gameID string, userID string, socketClient *SocketClient) bool
+	Pass(gameID string, userID string) bool
 	PlaceStone(gameID string, userID string, coord Coord) bool
 }
 
@@ -86,6 +88,20 @@ func (gameManager *GameManager) JoinGame(gameID string, userID string, socketCli
 	}
 
 	game.Players[userID] = &player
+	return true
+}
+
+func (gameManager *GameManager) LeaveGame(gameID string, userID string) bool {
+	game := gameManager.games[gameID]
+	// return false if no game or player is not part of game
+	if game == nil || game.Players[userID] == nil {
+		return false
+	}
+	game.M.Lock()
+	defer game.M.Unlock()
+
+	game.IsOver = true
+	game.Players[userID].SocketClient = nil
 	return true
 }
 

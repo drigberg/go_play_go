@@ -120,6 +120,16 @@ func (gameManager *GameManager) PlaceStone(gameID string, userID string, coord C
 	return placed
 }
 
+func (gameManager *GameManager) Pass(gameID string, userID string) bool {
+	game := gameManager.games[gameID]
+	if game == nil {
+		return false
+	}
+
+	game.Pass(userID)
+	return true
+}
+
 func (gameManager *GameManager) GetOtherPlayer(gameID string, userID string) (*Player, error) {
 	game := gameManager.games[gameID]
 	if game == nil {

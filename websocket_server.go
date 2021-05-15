@@ -182,7 +182,7 @@ func onGetGameInfo(c *SocketClient, data []byte) {
 	c.Write()
 }
 
-type GetPlaceStoneRequest struct {
+type PlaceStoneRequest struct {
 	UserID string
 	GameID string
 	Coord  Coord
@@ -192,7 +192,7 @@ func onPlaceStone(c *SocketClient, data []byte) {
 	log.Println("Request: placeStone")
 
 	// parse and validate request
-	var req GetPlaceStoneRequest
+	var req PlaceStoneRequest
 	json.Unmarshal(data, &req)
 	userID := req.UserID
 	gameID := req.GameID
@@ -218,7 +218,40 @@ func onPlaceStone(c *SocketClient, data []byte) {
 	sendOtherPlayerUpdate(gameID, userID)
 }
 
-// TODO: onPass
+type PassRequest struct {
+	UserID string
+	GameID string
+}
+
+func onPass(c *SocketClient, data []byte) {
+	log.Println("Request: pass")
+
+	// parse and validate request
+	var req PassRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	gameID := req.GameID
+
+	if userID == "" || gameID == "" {
+		log.Println("Invalid request format")
+		c.send = create400Error("Invalid request format")
+		c.Write()
+		return
+	}
+
+	passed := gameManager.Pass(gameID, userID)
+	if !passed {
+		log.Println("Unable to pass turn")
+		c.send = create400Error("Unable to pass turn")
+		c.Write()
+		return
+	}
+
+	c.send = Message{Name: "update", Data: nil}
+	c.Write()
+	sendOtherPlayerUpdate(gameID, userID)
+}
+
 // TODO: onMessage
 
 func RunServer() {
@@ -229,6 +262,7 @@ func RunServer() {
 	router.Handle("joinGame", onJoinGame)
 	router.Handle("getGameInfo", onGetGameInfo)
 	router.Handle("placeStone", onPlaceStone)
+	router.Handle("pass", onPass)
 
 	// handle all requests to /, upgrade to WebSocket via our router handler.
 	http.Handle("/", router)

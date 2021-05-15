@@ -27,8 +27,32 @@ type CreateGameRequest struct {
 	UserID string
 }
 
-type ErrorData struct {
+type ErrorDataJoinGame struct {
+	Type string "joinGame"
+}
+
+type ErrorData400 struct {
+	Type string "400"
 	Message string
+}
+
+func create400Error(message string) Message {
+	return Message{
+		Name: "error",
+		Data: ErrorData400{
+			Type: "400",
+			Message: message,
+		},
+	}
+}
+
+func createJoinGameError() Message {
+	return Message{
+		Name: "error",
+		Data: ErrorDataJoinGame{
+			Type: "joinGame",
+		},
+	}
 }
 
 func onCreateGame(c *SocketClient, data []byte) {
@@ -41,7 +65,7 @@ func onCreateGame(c *SocketClient, data []byte) {
 
 	if userID == "" {
 		log.Println("Invalid request format")
-		c.send = Message{Name: "error", Data: ErrorData{Message: "Invalid request format"}}
+		c.send = create400Error("Invalid request format")
 		c.Write()
 		return
 	}
@@ -71,7 +95,7 @@ func onJoinGame(c *SocketClient, data []byte) {
 
 	if userID == "" || gameID <= 0 {
 		log.Println("Invalid request format")
-		c.send = Message{Name: "error", Data: ErrorData{Message: "Invalid request format"}}
+		c.send = create400Error("Invalid request format")
 		c.Write()
 		return
 	}
@@ -84,7 +108,7 @@ func onJoinGame(c *SocketClient, data []byte) {
 
 	if !joined {
 		log.Println("Player " + userID + " could not join game " + strconv.Itoa(gameID))
-		c.send = Message{Name: "error", Data: ErrorData{Message: "cannot join game " + strconv.Itoa(gameID)}}
+		c.send = createJoinGameError()
 		c.Write()
 		return
 	}

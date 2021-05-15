@@ -66,7 +66,6 @@ func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
 		opponentColor = BLACK
 	}
 
-	// if no liberties, assert that we are capturing stones
 	neighboringOpponentStones := board.getNeighboringOpponentStones(coord, color)
 	stonesToCapture := []Coord{}
 	for _, stone := range neighboringOpponentStones {
@@ -211,7 +210,7 @@ func (board *Board) countLibertiesFuture(coord Coord, proposed Coord) int {
 	neighborCoords := board.getNeighborCoords(coord)
 	liberties := 0
 	for _, neighborCoord := range neighborCoords {
-		if board.getSpaceOwnership(neighborCoord) == FREE && !(coord.X == proposed.X && coord.Y == proposed.Y) {
+		if board.getSpaceOwnership(neighborCoord) == FREE && !(neighborCoord.X == proposed.X && neighborCoord.Y == proposed.Y) {
 			liberties++
 		}
 	}

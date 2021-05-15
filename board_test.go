@@ -290,9 +290,9 @@ func TestBoardCaptureGroupCenter(t *testing.T) {
 	gameBoard.PlaceStone(Coord{X: 3, Y: 2}, BLACK)
 	gameBoard.PlaceStone(Coord{X: 2, Y: 3}, BLACK)
 	gameBoard.PlaceStone(Coord{X: 1, Y: 3}, BLACK)
-	gameBoard.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
 
 	// place second-to-last stone
+	gameBoard.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
 	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
 	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 	if len(whiteSpaces) != 3 {
@@ -328,9 +328,9 @@ func TestBoardCaptureMultipleGroups(t *testing.T) {
 	gameBoard.PlaceStone(Coord{X: 3, Y: 2}, BLACK)
 	gameBoard.PlaceStone(Coord{X: 2, Y: 2}, BLACK)
 	gameBoard.PlaceStone(Coord{X: 1, Y: 2}, BLACK)
-	gameBoard.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
 
 	// place second-to-last stone
+	gameBoard.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
 	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
 	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
 
@@ -342,9 +342,8 @@ func TestBoardCaptureMultipleGroups(t *testing.T) {
 		t.Errorf("Expected 8 black spaces, got %d", len(blackSpaces))
 	}
 
-	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
-
 	// place final stone
+	gameBoard.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
 	whiteSpaces = gameBoard.ListSpacesForColor(WHITE)
 	blackSpaces = gameBoard.ListSpacesForColor(BLACK)
 
@@ -354,5 +353,48 @@ func TestBoardCaptureMultipleGroups(t *testing.T) {
 
 	if len(blackSpaces) != 9 {
 		t.Errorf("Expected 9 black spaces, got %d", len(blackSpaces))
+	}
+}
+
+func TestBoardCaptureDonut(t *testing.T) {
+	gameBoard := NewBoard(9)
+
+	gameBoard.PlaceStone(Coord{X: 2, Y: 4}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 3}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 4, Y: 2}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 5, Y: 3}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 6, Y: 4}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 5, Y: 5}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 4, Y: 6}, WHITE)
+	gameBoard.PlaceStone(Coord{X: 3, Y: 5}, WHITE)
+
+	gameBoard.PlaceStone(Coord{X: 3, Y: 4}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 4, Y: 3}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 5, Y: 4}, BLACK)
+	gameBoard.PlaceStone(Coord{X: 4, Y: 5}, BLACK)
+
+	// place second-to-last stone
+	whiteSpaces := gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces := gameBoard.ListSpacesForColor(BLACK)
+
+	if len(whiteSpaces) != 8 {
+		t.Errorf("Expected 8 white spaces, got %d", len(whiteSpaces))
+	}
+
+	if len(blackSpaces) != 4 {
+		t.Errorf("Expected 4 black spaces, got %d", len(blackSpaces))
+	}
+
+	// place final stone
+	gameBoard.PlaceStone(Coord{X: 4, Y: 4}, WHITE)
+	whiteSpaces = gameBoard.ListSpacesForColor(WHITE)
+	blackSpaces = gameBoard.ListSpacesForColor(BLACK)
+
+	if len(whiteSpaces) != 9 {
+		t.Errorf("Expected 9 white spaces, got %d", len(whiteSpaces))
+	}
+
+	if len(blackSpaces) != 0 {
+		t.Errorf("Expected 0 black spaces, got %d", len(blackSpaces))
 	}
 }

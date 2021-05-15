@@ -10,6 +10,7 @@ const (
 	FREE  = "FREE"
 	WHITE = "WHITE"
 	BLACK = "BLACK"
+	KOMI  = "KOMI"
 )
 
 type Scores struct {
@@ -26,6 +27,15 @@ type Coord struct {
 type Board struct {
 	Size   int
 	Spaces [][]string
+}
+
+func coordIsInList(coord Coord, coords []Coord) bool {
+	for _, compare := range coords {
+		if coord.X == compare.X && coord.Y == compare.Y {
+			return true
+		}
+	}
+	return false
 }
 
 // BoardInterface defines methods a Board should implement
@@ -71,12 +81,7 @@ func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
 	for _, stone := range neighboringOpponentStones {
 		// Multiple neighboring opponent stones may belong to on group being captured,
 		// but we could also be capturing multiple groups.
-		alreadyCaptured := false
-		for _, captured := range stonesToCapture {
-			if stone.X == captured.X && stone.Y == captured.Y {
-				alreadyCaptured = true
-			}
-		}
+		alreadyCaptured := coordIsInList(stone, stonesToCapture)
 
 		if !alreadyCaptured {
 			opponentStoneGroup := board.getAllConnectedStones(stone, opponentColor, []Coord{})
@@ -136,13 +141,7 @@ func (board *Board) GetAvailableSpaces(color string) []Coord {
 
 func (board *Board) canPlaceStone(coord Coord, color string) bool {
 	available := board.GetAvailableSpaces(color)
-	for _, c := range available {
-		if c.X == coord.X && c.Y == coord.Y {
-			return true
-		}
-	}
-
-	return false
+	return coordIsInList(coord, available)
 }
 
 func (board *Board) PlaceStone(coord Coord, color string) bool {
@@ -249,12 +248,7 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 	neighbors := board.getConnectedStones(coord, color)
 	if neighbors != nil {
 		for _, n := range neighbors {
-			isNew := true
-			for _, c := range connected {
-				if c.X == n.X && c.Y == n.Y {
-					isNew = false
-				}
-			}
+			isNew := !coordIsInList(n, connected)
 			if isNew {
 				connected = board.getAllConnectedStones(n, color, connected)
 			}
@@ -276,8 +270,98 @@ func (board *Board) getFreeSpaces() []Coord {
 	return coords
 }
 
+func (board *Board) getGroupedFreeSpaces() [][]Coord {
+	coords := board.getFreeSpaces()
+	grouped := []Coord{}
+	groups := [][]Coord{}
+
+	for _, coord := range coords {
+		if !coordIsInList(coord, grouped) {
+			group := board.getAllConnectedStones(coord, FREE, []Coord{})
+			groups = append(groups, group)
+			for _, c := range group {
+				grouped = append(grouped, c)
+			}
+		}
+	}
+
+	return groups
+}
+
+type Territories struct {
+	BLACK [][]Coord
+	WHITE [][]Coord
+}
+
+// only returns BLACK or WHITE: skips FREE and KOMI (which shouldn't exist yet)
+func (board *Board) getAllNeighborColors(coord Coord) []string {
+	neighborCoords := board.getNeighborCoords(coord)
+	colors := []string{}
+
+	for _, neighborCoord := range neighborCoords {
+		color := board.getSpaceOwnership(neighborCoord)
+		if color == BLACK || color == WHITE {
+			colorInList := false
+			for _, c := range colors {
+				if c == color {
+					colorInList = true
+				}
+			}
+			if !colorInList {
+				colors = append(colors, color)
+			}
+		}
+	}
+
+	return colors
+}
+
+// only returns BLACK or WHITE: skips FREE and KOMI (which shouldn't exist yet)
+func (board *Board) getAllNeighborColorsForGroup(coords []Coord) []string {
+	colors := []string{}
+
+	for _, coord := range coords {
+		neighborColors := board.getAllNeighborColors(coord)
+		for _, neighborColor := range neighborColors {
+			colorInList := false
+			for _, c := range colors {
+				if c == neighborColor {
+					colorInList = true
+				}
+			}
+			if !colorInList {
+				colors = append(colors, neighborColor)
+			}
+		}
+	}
+
+	return colors
+}
+
+func (board *Board) getTerritories() Territories {
+	groups := board.getGroupedFreeSpaces()
+
+	black := [][]Coord{}
+	white := [][]Coord{}
+	for _, group := range groups {
+		neighborColors := board.getAllNeighborColorsForGroup(group)
+		if len(neighborColors) == 1 {
+			if neighborColors[0] == BLACK {
+				black = append(black, group)
+			} else {
+				white = append(white, group)
+			}
+		}
+	}
+
+	return Territories{
+		BLACK: black,
+		WHITE: white,
+	}
+}
+
 func (board *Board) GetScores() Scores {
-	// freeSpaces := board.getFreeSpaces()
+	// territories := board.getTerritories()
 
 	// Split free spaces into groups
 	// Assign each free group to a color

@@ -417,3 +417,72 @@ func TestBoardGetFreeSpaces(t *testing.T) {
 		t.Errorf("Expected 77 free spaces, got %d", len(freeSpaces))
 	}
 }
+
+func TestBoardGroupFreeSpaces(t *testing.T) {
+	board := NewBoard(9)
+	groups := board.getGroupedFreeSpaces()
+
+	if len(groups) != 1 {
+		t.Errorf("Expected 1 group of free spaces, got %d", len(groups))
+	}
+
+	if len(groups[0]) != 81 {
+		t.Errorf("Expected 81 free spaces in group, got %d", len(groups[0]))
+	}
+
+	board.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 2}, WHITE)
+	board.PlaceStone(Coord{X: 1, Y: 2}, WHITE)
+	board.PlaceStone(Coord{X: 0, Y: 2}, WHITE)
+
+	groups = board.getGroupedFreeSpaces()
+
+	if len(groups) == 2 {
+		if len(groups[0]) != 4 {
+			t.Errorf("Expected 4 free spaces in group 0, got %d", len(groups[0]))
+		}
+
+		if len(groups[1]) != 72 {
+			t.Errorf("Expected 72 free spaces in group 1, got %d", len(groups[1]))
+		}
+	} else {
+		t.Errorf("Expected 2 groups of free spaces, got %d", len(groups))
+	}
+}
+
+func TestBoardGetTerritories(t *testing.T) {
+	board := NewBoard(9)
+	territories := board.getTerritories()
+
+	board.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
+	board.PlaceStone(Coord{X: 5, Y: 5}, BLACK)
+
+	if len(territories.BLACK) != 0 {
+		t.Errorf("Expected 0 black territories, got %d", len(territories.BLACK))
+	}
+
+	if len(territories.WHITE) != 0 {
+		t.Errorf("Expected 0 white territories, got %d", len(territories.WHITE))
+	}
+
+	board.PlaceStone(Coord{X: 2, Y: 0}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 2}, WHITE)
+	board.PlaceStone(Coord{X: 1, Y: 2}, WHITE)
+	board.PlaceStone(Coord{X: 0, Y: 2}, WHITE)
+
+	territories = board.getTerritories()
+
+	if len(territories.BLACK) != 0 {
+		t.Errorf("Expected 0 black territories, got %d", len(territories.BLACK))
+	}
+
+	if len(territories.WHITE) == 1 {
+		if len(territories.WHITE[0]) != 4 {
+			t.Errorf("Expected 4 free spaces in white territory 0, got %d", len(territories.WHITE[0]))
+		}
+	} else {
+		t.Errorf("Expected 1 white territories, got %d", len(territories.WHITE))
+	}
+}

@@ -10,7 +10,6 @@ const (
 	FREE  = "FREE"
 	WHITE = "WHITE"
 	BLACK = "BLACK"
-	KOMI  = "KOMI"
 )
 
 type Scores struct {
@@ -293,7 +292,7 @@ type Territories struct {
 	WHITE [][]Coord
 }
 
-// only returns BLACK or WHITE: skips FREE and KOMI (which shouldn't exist yet)
+// only returns BLACK or WHITE: skips FREE
 func (board *Board) getAllNeighborColors(coord Coord) []string {
 	neighborCoords := board.getNeighborCoords(coord)
 	colors := []string{}
@@ -316,7 +315,7 @@ func (board *Board) getAllNeighborColors(coord Coord) []string {
 	return colors
 }
 
-// only returns BLACK or WHITE: skips FREE and KOMI (which shouldn't exist yet)
+// only returns BLACK or WHITE: skips FREE
 func (board *Board) getAllNeighborColorsForGroup(coords []Coord) []string {
 	colors := []string{}
 
@@ -363,8 +362,6 @@ func (board *Board) getTerritories() Territories {
 func (board *Board) GetScores() Scores {
 	// territories := board.getTerritories()
 
-	// Split free spaces into groups
-	// Assign each free group to a color
 	// Place 4 komi stones in black territory
 	// Fill the free spaces with each player's bank of 180 stones
 	// Locate the final free spaces to determine the winner

@@ -2,25 +2,26 @@ package main
 
 import (
 	"errors"
+	"math/rand"
 	"sync"
 )
 
 // GameManager handles all requests and game states
 type GameManager struct {
-	M             sync.Mutex
-	games         map[int]*Game
-	gameIDPointer int
-	wg            sync.WaitGroup
+	M     sync.Mutex
+	games map[string]*Game
 }
+
+const idChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 
 // GameManagerInterface defines methods a Game should implement
 type GameManagerInterface interface {
-	CreateGame(userID string, size int, socketClient *SocketClient) int
-	GetGameInfo(gameID int, userID string) (GameInfo, error)
-	GetOtherPlayer(gameID int, userID string) (*Player, error)
-	JoinGame(gameID int, userID string, socketClient *SocketClient) bool
-	RejoinGame(gameID int, userID string, socketClient *SocketClient) bool
-	PlaceStone(gameID int, userID string, coord Coord) bool
+	CreateGame(userID string, size int, socketClient *SocketClient) *Game
+	GetGameInfo(gameID string, userID string) (GameInfo, error)
+	GetOtherPlayer(gameID string, userID string) (*Player, error)
+	JoinGame(gameID string, userID string, socketClient *SocketClient) bool
+	RejoinGame(gameID string, userID string, socketClient *SocketClient) bool
+	PlaceStone(gameID string, userID string, coord Coord) bool
 }
 
 // assert that GameManager implements GameManagerInterface
@@ -29,37 +30,44 @@ var _ GameManagerInterface = (*GameManager)(nil)
 // NewServer creates a GameManager instance
 func NewGameManager() GameManager {
 	return GameManager{
-		games:         make(map[int]*Game),
-		gameIDPointer: 1,
+		games: make(map[string]*Game),
 	}
 }
 
-func (gameManager *GameManager) CreateGame(userID string, size int, socketClient *SocketClient) int {
+func (gameManager *GameManager) createGameId() string {
+	letters := []rune(idChars)
+	b := make([]rune, 6)
+	for i := range b {
+		b[i] = letters[rand.Intn(len(letters))]
+	}
+	return string(b)
+}
+
+func (gameManager *GameManager) CreateGame(userID string, size int, socketClient *SocketClient) *Game {
 	gameManager.M.Lock()
 	defer gameManager.M.Unlock()
-	defer func() { gameManager.gameIDPointer++ }()
 
 	player := Player{
 		UserID:       userID,
 		SocketClient: socketClient,
 	}
-
 	players := make(map[string]*Player)
-
 	players[userID] = &player
 
-	gameManager.games[gameManager.gameIDPointer] = &Game{
-		ID:            gameManager.gameIDPointer,
+	gameID := gameManager.createGameId()
+	game := Game{
+		ID:            gameID,
 		FirstPlayerID: userID,
 		Players:       players,
 		Turn:          1,
 		Board:         NewBoard(size),
 	}
 
-	return gameManager.gameIDPointer
+	gameManager.games[gameID] = &game
+	return &game
 }
 
-func (gameManager *GameManager) JoinGame(gameID int, userID string, socketClient *SocketClient) bool {
+func (gameManager *GameManager) JoinGame(gameID string, userID string, socketClient *SocketClient) bool {
 	game := gameManager.games[gameID]
 	if game == nil {
 		return false
@@ -81,7 +89,7 @@ func (gameManager *GameManager) JoinGame(gameID int, userID string, socketClient
 	return true
 }
 
-func (gameManager *GameManager) RejoinGame(gameID int, userID string, socketClient *SocketClient) bool {
+func (gameManager *GameManager) RejoinGame(gameID string, userID string, socketClient *SocketClient) bool {
 	game := gameManager.games[gameID]
 	// return false if no game or player is not part of game
 	if game == nil || game.Players[userID] == nil {
@@ -93,7 +101,7 @@ func (gameManager *GameManager) RejoinGame(gameID int, userID string, socketClie
 	return true
 }
 
-func (gameManager *GameManager) GetGameInfo(gameID int, userID string) (GameInfo, error) {
+func (gameManager *GameManager) GetGameInfo(gameID string, userID string) (GameInfo, error) {
 	game := gameManager.games[gameID]
 	// return false if no game or player is not part of game
 	if game == nil || game.Players[userID] == nil {
@@ -102,7 +110,7 @@ func (gameManager *GameManager) GetGameInfo(gameID int, userID string) (GameInfo
 	return game.GetInfo(userID), nil
 }
 
-func (gameManager *GameManager) PlaceStone(gameID int, userID string, coord Coord) bool {
+func (gameManager *GameManager) PlaceStone(gameID string, userID string, coord Coord) bool {
 	game := gameManager.games[gameID]
 	if game == nil {
 		return false
@@ -112,7 +120,7 @@ func (gameManager *GameManager) PlaceStone(gameID int, userID string, coord Coor
 	return placed
 }
 
-func (gameManager *GameManager) GetOtherPlayer(gameID int, userID string) (*Player, error) {
+func (gameManager *GameManager) GetOtherPlayer(gameID string, userID string) (*Player, error) {
 	game := gameManager.games[gameID]
 	if game == nil {
 		return &Player{}, errors.New("No other player")

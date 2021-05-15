@@ -7,7 +7,7 @@ import (
 
 type Game struct {
 	M                sync.Mutex
-	ID               int
+	ID               string
 	Players          map[string]*Player
 	Turn             int
 	Board            Board

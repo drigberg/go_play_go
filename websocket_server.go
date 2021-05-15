@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"strconv"
 )
 
 var gameManager GameManager
@@ -20,7 +19,7 @@ func onMessage(c *SocketClient, data []byte) {
 }
 
 type GameIdData struct {
-	GameID int
+	GameID string
 }
 
 type CreateGameRequest struct {
@@ -86,20 +85,20 @@ func onCreateGame(c *SocketClient, data []byte) {
 	}
 
 	// Create game
-	gameID := gameManager.CreateGame(userID, size, c)
+	game := gameManager.CreateGame(userID, size, c)
 
 	// set and write response message
-	log.Println("Player " + userID + " created game " + strconv.Itoa(gameID))
-	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
+	log.Println("Player " + userID + " created game " + game.ID)
+	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: game.ID}}
 	c.Write()
 }
 
 type JoinGameRequest struct {
 	UserID string
-	GameID int
+	GameID string
 }
 
-func sendOtherPlayerUpdate(gameID int, userID string) {
+func sendOtherPlayerUpdate(gameID string, userID string) {
 	otherPlayer, err := gameManager.GetOtherPlayer(gameID, userID)
 	if err == nil {
 		log.Println("Telling player " + otherPlayer.UserID + " to refresh")
@@ -119,7 +118,7 @@ func onJoinGame(c *SocketClient, data []byte) {
 	userID := req.UserID
 	gameID := req.GameID
 
-	if userID == "" || gameID <= 0 {
+	if userID == "" || gameID == "" {
 		log.Println("Invalid request format")
 		c.send = create400Error("Invalid request format")
 		c.Write()
@@ -133,14 +132,14 @@ func onJoinGame(c *SocketClient, data []byte) {
 	}
 
 	if !joined {
-		log.Println("Player " + userID + " could not join game " + strconv.Itoa(gameID))
+		log.Println("Player " + userID + " could not join game " + gameID)
 		c.send = createJoinGameError()
 		c.Write()
 		return
 	}
 
 	// set and write response message
-	log.Println("Player " + userID + " joined game " + strconv.Itoa(gameID))
+	log.Println("Player " + userID + " joined game " + gameID)
 	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
 	c.Write()
 
@@ -149,7 +148,7 @@ func onJoinGame(c *SocketClient, data []byte) {
 
 type GetGameInfoRequest struct {
 	UserID string
-	GameID int
+	GameID string
 }
 
 func onGetGameInfo(c *SocketClient, data []byte) {
@@ -161,7 +160,7 @@ func onGetGameInfo(c *SocketClient, data []byte) {
 	userID := req.UserID
 	gameID := req.GameID
 
-	if userID == "" || gameID <= 0 {
+	if userID == "" || gameID == "" {
 		log.Println("Invalid request format")
 		c.send = create400Error("Invalid request format")
 		c.Write()
@@ -185,7 +184,7 @@ func onGetGameInfo(c *SocketClient, data []byte) {
 
 type GetPlaceStoneRequest struct {
 	UserID string
-	GameID int
+	GameID string
 	Coord  Coord
 }
 
@@ -199,7 +198,7 @@ func onPlaceStone(c *SocketClient, data []byte) {
 	gameID := req.GameID
 	coord := req.Coord
 
-	if userID == "" || gameID <= 0 || coord.X < 0 || coord.Y < 0 {
+	if userID == "" || gameID == "" || coord.X < 0 || coord.Y < 0 {
 		log.Println("Invalid request format")
 		c.send = create400Error("Invalid request format")
 		c.Write()

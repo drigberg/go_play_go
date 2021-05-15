@@ -59,6 +59,7 @@ func (gameManager *GameManager) CreateGame(userID string, size int, socketClient
 	gameID := gameManager.createGameId()
 	game := Game{
 		ID:            gameID,
+		State:         "WAITING_FOR_OPPONENT",
 		FirstPlayerID: userID,
 		Players:       players,
 		Turn:          1,
@@ -88,6 +89,7 @@ func (gameManager *GameManager) JoinGame(gameID string, userID string, socketCli
 	}
 
 	game.Players[userID] = &player
+	game.State = "PLAYING"
 	return true
 }
 
@@ -100,7 +102,10 @@ func (gameManager *GameManager) LeaveGame(gameID string, userID string) bool {
 	game.M.Lock()
 	defer game.M.Unlock()
 
-	game.IsOver = true
+	if game.State != "GAME_OVER_PASSED" {
+		game.State = "GAME_OVER_FORFEIT"
+	}
+
 	game.Players[userID].SocketClient = nil
 	return true
 }

@@ -32,7 +32,7 @@ type ErrorDataJoinGame struct {
 }
 
 type ErrorDataGetGameInfo struct {
-	Type string "getGameINfo"
+	Type string "getGameInfo"
 }
 
 type ErrorData400 struct {

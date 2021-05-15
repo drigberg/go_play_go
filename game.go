@@ -5,6 +5,14 @@ import (
 	"sync"
 )
 
+// State can be one of:
+// - WAITING_FOR_OPPONENT
+// - PLAYING
+// - GAME_OVER_PASSED
+// - GAME_OVER_FORFEIT
+//
+// TODO: enforce enum
+
 type Game struct {
 	M                sync.Mutex
 	ID               string
@@ -12,7 +20,7 @@ type Game struct {
 	Turn             int
 	Board            Board
 	FirstPlayerID    string
-	IsOver           bool
+	State            string
 	LastPlayerPassed bool
 }
 
@@ -43,7 +51,7 @@ type GameInfo struct {
 	Size            int
 	Turn            int
 	Scores          Scores
-	IsOver          bool
+	State           string
 	PlayerColor     string
 	PlayerTurn      bool
 	OpponentID      string
@@ -84,7 +92,7 @@ func (game *Game) Pass(userID string) {
 
 	// If both players pass, the game is over
 	if game.LastPlayerPassed {
-		game.IsOver = true
+		game.State = "GAME_OVER_PASSED"
 	} else {
 		game.LastPlayerPassed = true
 	}
@@ -116,14 +124,12 @@ func (game *Game) GetInfo(userID string) GameInfo {
 
 	playerTurn := game.IsTurn(userID)
 
-	// TODO: end game if no possible moves left
-
 	return GameInfo{
 		Size:            game.Board.Size,
 		OpponentID:      opponentId,
 		PlayerColor:     color,
 		PlayerTurn:      playerTurn,
-		IsOver:          game.IsOver,
+		State:           game.State,
 		Scores:          game.Board.GetScores(),
 		AvailableSpaces: game.Board.GetAvailableSpaces(color),
 		Spaces:          Spaces,

@@ -17,6 +17,7 @@ type GameManager struct {
 type GameManagerInterface interface {
 	CreateGame(userID string, socketClient *SocketClient) int
 	GetGameInfo(gameID int, userID string) (GameInfo, error)
+	GetOtherPlayer(gameID int, userID string) (*Player, error)
 	JoinGame(gameID int, userID string, socketClient *SocketClient) bool
 	RejoinGame(gameID int, userID string, socketClient *SocketClient) bool
 	PlaceStone(gameID int, userID string, coord Coord) bool
@@ -112,4 +113,13 @@ func (gameManager *GameManager) PlaceStone(gameID int, userID string, coord Coor
 
 	placed := game.PlaceStone(userID, coord)
 	return placed
+}
+
+func (gameManager *GameManager) GetOtherPlayer(gameID int, userID string) (*Player, error) {
+	game := gameManager.games[gameID]
+	if game == nil {
+		return &Player{}, errors.New("No other player")
+	}
+
+	return game.GetOtherPlayer(userID)
 }

@@ -130,6 +130,14 @@ func onJoinGame(c *SocketClient, data []byte) {
 	log.Println("Player " + userID + " joined game " + strconv.Itoa(gameID))
 	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
 	c.Write()
+
+	otherPlayer, err := gameManager.GetOtherPlayer(gameID, userID)
+	if err == nil {
+		otherPlayer.SocketClient.send = Message{Name: "update", Data: nil}
+		otherPlayer.SocketClient.Write()
+	} else {
+		log.Println("No other player found!")
+	}
 }
 
 type GetGameInfoRequest struct {

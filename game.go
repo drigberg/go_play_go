@@ -1,6 +1,7 @@
 package main
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -22,7 +23,12 @@ type Player struct {
 
 // GameInterface defines methods a Game should implement
 type GameInterface interface {
+	GetInfo(userID string) GameInfo
+	GetOtherPlayer(userID string) (*Player, error)
+	GetPlayerColor(userID string) string
 	IsTurn(userID string) bool
+	Pass(userID string)
+	PlaceStone(userID string, coord Coord) bool
 }
 
 // assert that Game implements GameInterface
@@ -77,6 +83,15 @@ func (game *Game) Pass(userID string) {
 	game.Turn += 1
 }
 
+func (game *Game) GetOtherPlayer(userID string) (*Player, error) {
+	for _, player := range game.Players {
+		if player.UserID != userID {
+			return player, nil
+		}
+	}
+	return &Player{}, errors.New("No other player")
+}
+
 // Returns all the information that the client needs for the game state
 func (game *Game) GetInfo(userID string) GameInfo {
 	color := game.GetPlayerColor(userID)
@@ -84,7 +99,7 @@ func (game *Game) GetInfo(userID string) GameInfo {
 		BLACK: game.Board.ListSpacesForColor(BLACK),
 		WHITE: game.Board.ListSpacesForColor(WHITE),
 	}
-	var opponentId string
+	opponentId := "NONE"
 	for _, player := range game.Players {
 		if player.UserID != userID {
 			opponentId = player.UserID
@@ -105,9 +120,4 @@ func (game *Game) GetInfo(userID string) GameInfo {
 		Spaces:          Spaces,
 		Turn:            game.Turn,
 	}
-}
-
-func (game *Game) Message(userID string, message string) bool {
-	// TODO: send message
-	return true
 }

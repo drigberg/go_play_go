@@ -50,7 +50,7 @@ type Spaces struct {
 type GameInfo struct {
 	Size            int
 	Turn            int
-	Scores          Scores
+	ScoreData       ScoreData
 	State           string
 	PlayerColor     string
 	PlayerTurn      bool
@@ -125,12 +125,12 @@ func (game *Game) GetInfo(userID string) GameInfo {
 	playerTurn := game.IsTurn(userID)
 
 	return GameInfo{
-		Size:        game.Board.Size,
-		OpponentID:  opponentId,
-		PlayerColor: color,
-		PlayerTurn:  playerTurn,
-		State:       game.State,
-		// Scores:          game.Board.GetScores(),
+		Size:            game.Board.Size,
+		OpponentID:      opponentId,
+		PlayerColor:     color,
+		PlayerTurn:      playerTurn,
+		State:           game.State,
+		ScoreData:       game.Board.GetScoreData(),
 		AvailableSpaces: game.Board.GetAvailableSpaces(color),
 		Spaces:          Spaces,
 		Turn:            game.Turn,

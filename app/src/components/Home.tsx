@@ -70,8 +70,10 @@ function Home(): JSX.Element {
 
   useEffect(() => {
     // TODO: reconnect with backoff if disconnected
-    // TODO: use other port if not in production, read from config
-    const HOST = location.origin.replace(/^http/, 'ws');
+    const HOST =
+      process.env.NODE_ENV === 'production'
+        ? location.origin.replace(/^http/, 'ws')
+        : 'ws://localhost:8080';
     const s = new WebSocket(`${HOST}/socket`);
     setSocket(s);
   }, []);

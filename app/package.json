@@ -7,7 +7,7 @@
   },
   "scripts": {
     "build": "react-scripts build",
-    "start": "PORT=8080 react-scripts start",
+    "start": "react-scripts start",
     "lint": "eslint ./src --fix",
     "test": "react-scripts test"
   },

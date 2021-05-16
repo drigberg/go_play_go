@@ -448,19 +448,34 @@ func (board *Board) fillBoard(territories Territories, komi []Coord) ([][]string
 
 type ScoreData struct {
 	Winner          string
-	PointDifference int
+	PointDifference float32
 }
 
+func (board *Board) getPointDifference(winner string, numFreeSpaces int, remaining StoneCounts) float32 {
+	if winner == BLACK {
+		return float32(numFreeSpaces-remaining.BLACK+remaining.WHITE) - 0.5
+	} else {
+		return float32(numFreeSpaces+remaining.BLACK-remaining.WHITE) + 0.5
+	}
+}
 func (board *Board) countPoints(spaces [][]string, remaining StoneCounts) ScoreData {
 	freeSpaces := board.getFreeSpaces(spaces)
 	var winner string
-	if remaining.BLACK == 0 {
-		winner = "BLACK"
+
+	colors := board.getAllNeighborColorsForGroup(freeSpaces)
+	if len(colors) == 1 {
+		// the winner is whoever claims the final free space
+		winner = colors[0]
 	} else {
-		winner = "WHITE"
+		// the game wasn't complete, so we'll do our best?
+		if remaining.BLACK < remaining.WHITE {
+			winner = BLACK
+		} else if remaining.BLACK > remaining.WHITE {
+			winner = WHITE
+		}
 	}
-	// one remaining number is 0, so we can just add both to get the number left for the loser
-	pointDifference := len(freeSpaces) + remaining.BLACK + remaining.WHITE
+
+	pointDifference := board.getPointDifference(winner, len(freeSpaces), remaining)
 	return ScoreData{
 		Winner:          winner,
 		PointDifference: pointDifference,
@@ -469,9 +484,13 @@ func (board *Board) countPoints(spaces [][]string, remaining StoneCounts) ScoreD
 
 // GetScore() tallies points using the Ing method, with 4 komi placed in black territory
 func (board *Board) GetScoreData() ScoreData {
+	// First we find all the free spaces surrounded by each placer
 	territories := board.getTerritories()
+	// Then we place four white stones in black territory
 	territories, komi := board.placeKomi(territories)
+	// Using the remaining stones belonging to each player, we fill the claimed territory
 	spaces, remaining := board.fillBoard(territories, komi)
+	// The winner is whoever holds the final free space
 	scoreData := board.countPoints(spaces, remaining)
 	return scoreData
 }

@@ -630,25 +630,96 @@ func TestBoardGetScoreDataBasic(t *testing.T) {
 		t.Errorf("Expected white to win")
 	}
 
-	if scoreData.PointDifference != 17 {
-		t.Errorf("Expected white to win by 17 points, got %d", scoreData.PointDifference)
+	if scoreData.PointDifference != 17.5 {
+		t.Errorf("Expected white to win by 17.5 points, got %f", scoreData.PointDifference)
 	}
 }
 
 func TestBoardGetScoreDataEyes(t *testing.T) {
 	board := NewBoard(9)
-	for x := 0; x < 9; x++ {
-		board.PlaceStone(Coord{X: x, Y: 3}, BLACK)
-		board.PlaceStone(Coord{X: x, Y: 4}, WHITE)
+	blackCoords := []Coord{
+		Coord{0, 0},
+		Coord{0, 1},
+		Coord{0, 2},
+		Coord{0, 3},
+		Coord{0, 4},
+		Coord{0, 5},
+		Coord{0, 6},
+		Coord{1, 1},
+		Coord{1, 3},
+		Coord{1, 6},
+		Coord{1, 7},
+		Coord{1, 8},
+		Coord{2, 0},
+		Coord{2, 7},
+		Coord{3, 0},
+		Coord{3, 7},
+		Coord{4, 0},
+		Coord{4, 1},
+		Coord{4, 7},
+		Coord{5, 1},
+		Coord{5, 7},
+		Coord{6, 0},
+		Coord{6, 1},
+		Coord{6, 2},
+		Coord{6, 7},
+		Coord{7, 1},
+		Coord{7, 2},
+		Coord{7, 7},
+		Coord{8, 1},
+		Coord{8, 2},
+		Coord{8, 3},
+		Coord{8, 7},
+	}
+
+	whiteCoords := []Coord{
+		Coord{1, 2},
+		Coord{1, 4},
+		Coord{1, 5},
+		Coord{2, 1},
+		Coord{2, 2},
+		Coord{2, 3},
+		Coord{2, 4},
+		Coord{2, 5},
+		Coord{2, 6},
+		Coord{3, 1},
+		Coord{3, 2},
+		Coord{3, 4},
+		Coord{3, 5},
+		Coord{3, 6},
+		Coord{4, 2},
+		Coord{4, 3},
+		Coord{4, 6},
+		Coord{5, 2},
+		Coord{5, 3},
+		Coord{5, 4},
+		Coord{5, 5},
+		Coord{5, 6},
+		Coord{6, 3},
+		Coord{6, 6},
+		Coord{7, 3},
+		Coord{7, 4},
+		Coord{7, 5},
+		Coord{7, 6},
+		Coord{8, 4},
+		Coord{8, 6},
+	}
+
+	for _, c := range blackCoords {
+		board.PlaceStone(c, BLACK)
+	}
+
+	for _, c := range whiteCoords {
+		board.PlaceStone(c, WHITE)
 	}
 
 	scoreData := board.GetScoreData()
 
-	if scoreData.Winner != WHITE {
-		t.Errorf("Expected white to win")
+	if scoreData.Winner != BLACK {
+		t.Errorf("Expected black to win")
 	}
 
-	if scoreData.PointDifference != 17 {
-		t.Errorf("Expected white to win by 17 points, got %d", scoreData.PointDifference)
+	if scoreData.PointDifference != 0.5 {
+		t.Errorf("Expected black to win by 0.5 points, got %f", scoreData.PointDifference)
 	}
 }

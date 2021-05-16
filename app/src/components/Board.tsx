@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import type { Coord, GameInfo } from './types';
 
 function getHoshiPositions(size: number): Array<number> {
@@ -21,13 +21,20 @@ type Props = {
 
 function Board(props: Props): JSX.Element {
   const [stoneToPlace, setStoneToPlace] = useState<Coord | null>(null);
+  const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
 
-  const width = 800;
+  useEffect(() => {
+    window.addEventListener('resize', () => {
+      setWindowWidth(window.innerWidth);
+    });
+  }, []);
+
+  const width = windowWidth > 800 ? 800 : windowWidth - 60;
   const size = props.gameInfo.Size;
   const rowWidth = width / (size + 1);
-  const strokeWidth = 4 / (size / 9);
-  const stoneRadius = 25 / (size / 9);
-  const hoshiRadius = 10 / (size / 9);
+  const strokeWidth = width / 200 / (size / 9);
+  const stoneRadius = width / 16 / (size / 9);
+  const hoshiRadius = width / 80 / (size / 9);
   const hoshiPositions = getHoshiPositions(size);
 
   function isStoneToPlace(coord: Coord): boolean {

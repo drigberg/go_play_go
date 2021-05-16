@@ -14,6 +14,14 @@ import {
 } from 'decoders';
 import type { Guard } from 'decoders';
 
+// The recommended usage for constants with `decoders` is `constant('someString' as const)`, but the `as` keyword
+// is not recognized by this eslint/tsc configuration. The correct configuration would use @typescript-eslint/parser,
+// but there is an issue with the latest versions of TypeScript which result in `React` being marked as an unused
+// variable.
+// - https://github.com/nvie/decoders#constant
+// - https://github.com/microsoft/TypeScript/issues/41882
+// - https://stackoverflow.com/questions/55807329/why-eslint-throws-no-unused-vars-for-typescript-interface
+
 type IncomingMessage$GameJoined = {
   name: 'gameJoined';
   data: {

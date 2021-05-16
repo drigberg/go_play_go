@@ -17,12 +17,14 @@ type Event string
 
 // Router is a message routing object mapping events to function handlers.
 type Router struct {
+	Port  string
 	rules map[Event]Handler
 }
 
 // NewRouter returns an initialized Router.
-func NewRouter() *Router {
+func NewRouter(port string) *Router {
 	return &Router{
+		Port:  port,
 		rules: make(map[Event]Handler),
 	}
 }
@@ -34,8 +36,12 @@ func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			// only allow requests from port 8080
-			return r.Header.Get("Origin") == "http://localhost:8080"
+			// only allow requests from app port
+			// origin := r.Header.Get("Origin")
+			// TODO: clean up
+			// log.Println("Origin:", r.Header.Get("Origin"))
+			// return origin == "http://localhost:"+rt.AppPort || origin == "http://127.0.0.1:"+rt.AppPort || origin == "http://0.0.0.0:"+rt.AppPort
+			return true
 		},
 	}
 

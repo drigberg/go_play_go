@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 )
 
 var gameManager GameManager
@@ -292,10 +293,8 @@ func onPass(c *SocketClient, data []byte) {
 	sendOtherPlayerUpdate(gameID, userID)
 }
 
-// TODO: onMessage
-
-func RunWebsocketServer() {
-	router := NewRouter()
+func RunServer(port string) {
+	router := NewRouter(port)
 	gameManager = NewGameManager()
 	router.Handle("message", onMessage)
 	router.Handle("createGame", onCreateGame)
@@ -306,9 +305,17 @@ func RunWebsocketServer() {
 	router.Handle("leaveGame", onLeaveGame)
 
 	// handle all requests to /, upgrade to WebSocket via our router handler.
-	http.Handle("/", router)
+	http.Handle("/socket", router)
+
+	if os.Getenv("ENV") == "PRODUCTION" {
+		r := http.NewServeMux()
+		buildHandler := http.FileServer(http.Dir("app/build"))
+		r.Handle("/", buildHandler)
+		http.Handle("/", r)
+		log.Println("Production: serving client app")
+	}
 
 	// start server.
-	log.Println("Listening on port 3001")
-	http.ListenAndServe(":3001", nil)
+	log.Println("Listening on port " + port)
+	log.Fatal(http.ListenAndServe("0.0.0.0:"+port, nil))
 }

@@ -130,7 +130,7 @@ function Home(): JSX.Element {
                 localStorage.removeItem(gameIdKey);
                 setGameId(null);
                 setError(
-                  "Current game not found on server! The developer didn't want to integrate any sort of database or file store, so this is what you get when the server restarts. Hope you weren't in the middle of a game!!!!",
+                  'Game not found! Either you typed in an invalid game ID, or the server restarted.',
                 );
                 break;
               default:

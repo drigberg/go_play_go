@@ -21,8 +21,6 @@ type Props = {
 
 function Board(props: Props): JSX.Element {
   const [stoneToPlace, setStoneToPlace] = useState<Coord | null>(null);
-  // TODO: highlight last move
-  // TODO: show final score when game is over
 
   const width = 800;
   const size = props.gameInfo.Size;

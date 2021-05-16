@@ -10,8 +10,6 @@ import (
 // - PLAYING
 // - GAME_OVER_PASSED
 // - GAME_OVER_FORFEIT
-//
-// TODO: enforce enum
 
 type Game struct {
 	M                sync.Mutex

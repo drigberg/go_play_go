@@ -371,18 +371,16 @@ func (board *Board) getTerritories() Territories {
 // Place up to 4 white stones in black territory
 func (board *Board) placeKomi(territories Territories) (Territories, []Coord) {
 	komi := []Coord{}
-	for len(territories.BLACK) > 0 {
-		for len(territories.BLACK[0]) > 0 {
-			// place white stones in four black spaces
-			komi = append(komi, territories.BLACK[0][0])
-			territories.BLACK[0] = territories.BLACK[0][1:]
-			if len(territories.BLACK[0]) == 0 {
-				// remove group if empty
-				territories.BLACK = territories.BLACK[1:]
-			}
-			if len(komi) == 4 {
-				return territories, komi
-			}
+	for len(territories.BLACK) > 0 && len(territories.BLACK[0]) > 0 {
+		// place white stones in four black spaces
+		komi = append(komi, territories.BLACK[0][0])
+		territories.BLACK[0] = territories.BLACK[0][1:]
+		if len(territories.BLACK[0]) == 0 {
+			// remove group if empty
+			territories.BLACK = territories.BLACK[1:]
+		}
+		if len(komi) == 4 {
+			return territories, komi
 		}
 	}
 	return territories, komi
@@ -475,7 +473,9 @@ func (board *Board) getPointDifference(winner string, numFreeSpaces int, remaini
 // Determines who is winning / has won the game
 func (board *Board) countPoints(spaces [][]string, remaining StoneCounts) ScoreData {
 	freeSpaces := board.ListSpacesForColor(spaces, FREE)
-	var winner string
+
+	// if we can't determine a winner, fall back to WHITE
+	winner := WHITE
 
 	colors := board.getAllNeighborColorsForGroup(freeSpaces)
 	if len(colors) == 1 {

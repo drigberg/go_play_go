@@ -112,8 +112,8 @@ func (game *Game) GetOtherPlayer(userID string) (*Player, error) {
 func (game *Game) GetInfo(userID string) GameInfo {
 	color := game.GetPlayerColor(userID)
 	Spaces := Spaces{
-		BLACK: game.Board.ListSpacesForColor(BLACK),
-		WHITE: game.Board.ListSpacesForColor(WHITE),
+		BLACK: game.Board.ListSpacesForColor(game.Board.Spaces, BLACK),
+		WHITE: game.Board.ListSpacesForColor(game.Board.Spaces, WHITE),
 	}
 	opponentId := "NONE"
 	for _, player := range game.Players {

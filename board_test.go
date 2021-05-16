@@ -20,8 +20,8 @@ func TestBoardPlaceStone(t *testing.T) {
 	placements[1] = board.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
 	placements[2] = board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
 
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
+	whiteSpaces := board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(board.Spaces, BLACK)
 
 	for i := range placements {
 		if !placements[i] {
@@ -223,8 +223,8 @@ func TestBoardCaptureSingleCorner(t *testing.T) {
 	board.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
 	board.PlaceStone(Coord{X: 1, Y: 0}, BLACK)
 
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
+	whiteSpaces := board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(board.Spaces, BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
@@ -244,8 +244,8 @@ func TestBoardCaptureGroupCorner(t *testing.T) {
 	board.PlaceStone(Coord{X: 1, Y: 1}, BLACK)
 	board.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
 
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
+	whiteSpaces := board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(board.Spaces, BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
@@ -271,8 +271,8 @@ func TestBoardCaptureGroupCenter(t *testing.T) {
 
 	// place second-to-last stone
 	board.PlaceStone(Coord{X: 0, Y: 2}, BLACK)
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
+	whiteSpaces := board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(board.Spaces, BLACK)
 	if len(whiteSpaces) != 3 {
 		t.Errorf("Expected 3 white spaces, got %d", len(whiteSpaces))
 	}
@@ -283,8 +283,8 @@ func TestBoardCaptureGroupCenter(t *testing.T) {
 	// place final stone
 	board.PlaceStone(Coord{X: 1, Y: 1}, BLACK)
 
-	whiteSpaces = board.ListSpacesForColor(WHITE)
-	blackSpaces = board.ListSpacesForColor(BLACK)
+	whiteSpaces = board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces = board.ListSpacesForColor(board.Spaces, BLACK)
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
 	}
@@ -309,8 +309,8 @@ func TestBoardCaptureMultipleGroups(t *testing.T) {
 
 	// place second-to-last stone
 	board.PlaceStone(Coord{X: 0, Y: 1}, BLACK)
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
+	whiteSpaces := board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(board.Spaces, BLACK)
 
 	if len(whiteSpaces) != 2 {
 		t.Errorf("Expected 2 white spaces, got %d", len(whiteSpaces))
@@ -322,8 +322,8 @@ func TestBoardCaptureMultipleGroups(t *testing.T) {
 
 	// place final stone
 	board.PlaceStone(Coord{X: 2, Y: 1}, BLACK)
-	whiteSpaces = board.ListSpacesForColor(WHITE)
-	blackSpaces = board.ListSpacesForColor(BLACK)
+	whiteSpaces = board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces = board.ListSpacesForColor(board.Spaces, BLACK)
 
 	if len(whiteSpaces) != 0 {
 		t.Errorf("Expected no white spaces, got %d", len(whiteSpaces))
@@ -352,8 +352,8 @@ func TestBoardCaptureDonut(t *testing.T) {
 	board.PlaceStone(Coord{X: 4, Y: 5}, BLACK)
 
 	// place second-to-last stone
-	whiteSpaces := board.ListSpacesForColor(WHITE)
-	blackSpaces := board.ListSpacesForColor(BLACK)
+	whiteSpaces := board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(board.Spaces, BLACK)
 
 	if len(whiteSpaces) != 8 {
 		t.Errorf("Expected 8 white spaces, got %d", len(whiteSpaces))
@@ -365,8 +365,8 @@ func TestBoardCaptureDonut(t *testing.T) {
 
 	// place final stone
 	board.PlaceStone(Coord{X: 4, Y: 4}, WHITE)
-	whiteSpaces = board.ListSpacesForColor(WHITE)
-	blackSpaces = board.ListSpacesForColor(BLACK)
+	whiteSpaces = board.ListSpacesForColor(board.Spaces, WHITE)
+	blackSpaces = board.ListSpacesForColor(board.Spaces, BLACK)
 
 	if len(whiteSpaces) != 9 {
 		t.Errorf("Expected 9 white spaces, got %d", len(whiteSpaces))
@@ -374,25 +374,6 @@ func TestBoardCaptureDonut(t *testing.T) {
 
 	if len(blackSpaces) != 0 {
 		t.Errorf("Expected 0 black spaces, got %d", len(blackSpaces))
-	}
-}
-
-func TestBoardGetFreeSpaces(t *testing.T) {
-	board := NewBoard(9)
-	freeSpaces := board.getFreeSpaces(board.Spaces)
-	if len(freeSpaces) != 81 {
-		t.Errorf("Expected 81 free spaces, got %d", len(freeSpaces))
-	}
-
-	// place stones and check again
-	board.PlaceStone(Coord{X: 2, Y: 4}, WHITE)
-	board.PlaceStone(Coord{X: 3, Y: 3}, WHITE)
-	board.PlaceStone(Coord{X: 3, Y: 4}, BLACK)
-	board.PlaceStone(Coord{X: 4, Y: 3}, BLACK)
-
-	freeSpaces = board.getFreeSpaces(board.Spaces)
-	if len(freeSpaces) != 77 {
-		t.Errorf("Expected 77 free spaces, got %d", len(freeSpaces))
 	}
 }
 
@@ -602,7 +583,7 @@ func TestBoardFillBoard(t *testing.T) {
 	}
 
 	spaces, remaining := board.fillBoard(territories, komi)
-	freeSpaces := board.getFreeSpaces(spaces)
+	freeSpaces := board.ListSpacesForColor(spaces, FREE)
 
 	if len(freeSpaces) != 9 {
 		t.Errorf("Expected 9 free spaces, got %d", len(freeSpaces))

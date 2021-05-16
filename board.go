@@ -22,9 +22,13 @@ type Board struct {
 	Spaces [][]string
 }
 
+func coordsAreEqual(c1 Coord, c2 Coord) bool {
+	return c1.X == c2.X && c1.Y == c2.Y
+}
+
 func coordIsInList(coord Coord, coords []Coord) bool {
 	for _, compare := range coords {
-		if coord.X == compare.X && coord.Y == compare.Y {
+		if coordsAreEqual(coord, compare) {
 			return true
 		}
 	}
@@ -36,7 +40,7 @@ type BoardInterface interface {
 	PlaceStone(coord Coord, color string) bool
 	GetScoreData() ScoreData
 	GetAvailableSpaces(color string) []Coord
-	ListSpacesForColor(color string) []Coord
+	ListSpacesForColor(spaces [][]string, color string) []Coord
 }
 
 // assert that Board implements BoardInterface
@@ -58,17 +62,19 @@ func NewBoard(size int) Board {
 	}
 }
 
-// returns true if either player has claimed a space
+// returns the value of a space
 func (board *Board) getSpaceOwnership(coord Coord) string {
 	return board.Spaces[coord.X][coord.Y]
 }
 
+// determines which stones will be captured by a move
 func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
 	opponentColor := WHITE
 	if color == WHITE {
 		opponentColor = BLACK
 	}
 
+	// find all opponent stones bordering the proposed move
 	neighboringOpponentStones := board.getNeighboringOpponentStones(coord, color)
 	stonesToCapture := []Coord{}
 	for _, stone := range neighboringOpponentStones {
@@ -77,12 +83,14 @@ func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
 		alreadyCaptured := coordIsInList(stone, stonesToCapture)
 
 		if !alreadyCaptured {
+			// finds all stones attached to the neighbor
 			opponentStoneGroup := board.getAllConnectedStones(stone, opponentColor, []Coord{})
 			opponentGroupLiberties := 0
 			for _, c := range opponentStoneGroup {
 				opponentGroupLiberties += board.countLibertiesFuture(c, coord)
 			}
 
+			// if the group would have no liberties, add to the list of captured stones
 			if opponentGroupLiberties == 0 {
 				for _, toCapture := range opponentStoneGroup {
 					stonesToCapture = append(stonesToCapture, toCapture)
@@ -94,6 +102,9 @@ func (board *Board) getStonesToCapture(coord Coord, color string) []Coord {
 	return stonesToCapture
 }
 
+// Returns all valid placements for a player, where stone is on the board and:
+// 1) stone will have liberties, or
+// 2) capture opponent stones
 func (board *Board) GetAvailableSpaces(color string) []Coord {
 	available := []Coord{}
 	for x := 0; x < board.Size; x++ {
@@ -101,12 +112,12 @@ func (board *Board) GetAvailableSpaces(color string) []Coord {
 			coord := Coord{X: x, Y: y}
 			isAvailable := false
 			if board.getSpaceOwnership(coord) == FREE {
+				// if the position has liberties, then it is a valid move
 				if board.countLiberties(coord) > 0 {
 					isAvailable = true
 				} else {
 					// if no liberties, assert that we are capturing stones
 					stonesToCapture := board.getStonesToCapture(coord, color)
-
 					if len(stonesToCapture) > 0 {
 						isAvailable = true
 					} else {
@@ -132,11 +143,15 @@ func (board *Board) GetAvailableSpaces(color string) []Coord {
 	return available
 }
 
+// Returns true if the coord is on the board and the stone will either:
+// 1) have liberties, or
+// 2) capture opponent stones
 func (board *Board) canPlaceStone(coord Coord, color string) bool {
 	available := board.GetAvailableSpaces(color)
 	return coordIsInList(coord, available)
 }
 
+// Places a stone on the board, if possible
 func (board *Board) PlaceStone(coord Coord, color string) bool {
 	if !board.canPlaceStone(coord, color) {
 		return false
@@ -151,6 +166,7 @@ func (board *Board) PlaceStone(coord Coord, color string) bool {
 	return true
 }
 
+// Removes a stone from the board
 func (board *Board) removeStone(coord Coord) bool {
 	if board.getSpaceOwnership(coord) == FREE {
 		return false
@@ -160,22 +176,25 @@ func (board *Board) removeStone(coord Coord) bool {
 	return true
 }
 
-func (board *Board) ListSpacesForColor(color string) []Coord {
-	spaces := []Coord{}
-	for x := 0; x < len(board.Spaces); x++ {
-		for y := 0; y < len(board.Spaces[x]); y++ {
-			if board.Spaces[x][y] == color {
-				spaces = append(spaces, Coord{X: x, Y: y})
+// Lists all spaces belonging to a color (BLACK, WHITE, or FREE)
+func (board *Board) ListSpacesForColor(spaces [][]string, color string) []Coord {
+	spacesForColor := []Coord{}
+	for x := range spaces {
+		for y := range spaces[x] {
+			if spaces[x][y] == color {
+				spacesForColor = append(spacesForColor, Coord{X: x, Y: y})
 			}
 		}
 	}
-	return spaces
+	return spacesForColor
 }
 
+// Returns true if the coord is valid for the board size
 func (board *Board) isOnBoard(coord Coord) bool {
 	return coord.X >= 0 && coord.X < board.Size && coord.Y >= 0 && coord.Y < board.Size
 }
 
+// Returns all valid positions bordering a coordinate
 func (board *Board) getNeighborCoords(coord Coord) []Coord {
 	unverified := []Coord{Coord{X: coord.X - 1, Y: coord.Y}, Coord{X: coord.X + 1, Y: coord.Y}, Coord{X: coord.X, Y: coord.Y - 1}, Coord{X: coord.X, Y: coord.Y + 1}}
 	neighborCoords := []Coord{}
@@ -187,6 +206,7 @@ func (board *Board) getNeighborCoords(coord Coord) []Coord {
 	return neighborCoords
 }
 
+// Returns the number of liberties for a stone
 func (board *Board) countLiberties(coord Coord) int {
 	neighborCoords := board.getNeighborCoords(coord)
 	liberties := 0
@@ -198,17 +218,19 @@ func (board *Board) countLiberties(coord Coord) int {
 	return liberties
 }
 
+// Returns the number of liberties a stone will have after the proposed move
 func (board *Board) countLibertiesFuture(coord Coord, proposed Coord) int {
 	neighborCoords := board.getNeighborCoords(coord)
 	liberties := 0
 	for _, neighborCoord := range neighborCoords {
-		if board.getSpaceOwnership(neighborCoord) == FREE && !(neighborCoord.X == proposed.X && neighborCoord.Y == proposed.Y) {
+		if board.getSpaceOwnership(neighborCoord) == FREE && !(coordsAreEqual(neighborCoord, proposed)) {
 			liberties++
 		}
 	}
 	return liberties
 }
 
+// Returns a connected group (BLACK, WHITE, or FREE)
 func (board *Board) getConnectedStones(coord Coord, color string) []Coord {
 	neighborCoords := board.getNeighborCoords(coord)
 	connected := []Coord{}
@@ -221,6 +243,7 @@ func (board *Board) getConnectedStones(coord Coord, color string) []Coord {
 	return connected
 }
 
+// Returns all opponent stones bordering a stone
 func (board *Board) getNeighboringOpponentStones(coord Coord, color string) []Coord {
 	neighborCoords := board.getNeighborCoords(coord)
 	opponentStones := []Coord{}
@@ -234,10 +257,10 @@ func (board *Board) getNeighboringOpponentStones(coord Coord, color string) []Co
 	return opponentStones
 }
 
-// we require a color argument so that we can see connected stones for proposed placements: if
-// we were just checking color by existing ownership, we'd get no results
+// Returns all stones connected to a stone (existing or proposed)
 func (board *Board) getAllConnectedStones(coord Coord, color string, connected []Coord) []Coord {
 	connected = append(connected, coord)
+	// get connected stones for the color of the existing or proposed move
 	neighbors := board.getConnectedStones(coord, color)
 	if neighbors != nil {
 		for _, n := range neighbors {
@@ -251,21 +274,9 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 	return connected
 }
 
-func (board *Board) getFreeSpaces(spaces [][]string) []Coord {
-	coords := []Coord{}
-	for x := 0; x < len(spaces); x++ {
-		for y := 0; y < len(spaces[x]); y++ {
-			if spaces[x][y] == FREE {
-				coords = append(coords, Coord{X: x, Y: y})
-			}
-		}
-	}
-
-	return coords
-}
-
+// Groups free spaces into chains
 func (board *Board) getGroupedFreeSpaces() [][]Coord {
-	coords := board.getFreeSpaces(board.Spaces)
+	coords := board.ListSpacesForColor(board.Spaces, FREE)
 	grouped := []Coord{}
 	groups := [][]Coord{}
 
@@ -287,7 +298,7 @@ type Territories struct {
 	WHITE [][]Coord
 }
 
-// only returns BLACK or WHITE: skips FREE
+// Returns all colors bordering a coord, ignoring FREE
 func (board *Board) getAllNeighborColors(coord Coord) []string {
 	neighborCoords := board.getNeighborCoords(coord)
 	colors := []string{}
@@ -310,7 +321,7 @@ func (board *Board) getAllNeighborColors(coord Coord) []string {
 	return colors
 }
 
-// only returns BLACK or WHITE: skips FREE
+// Returns all colors bordering a group, ignoring FREE
 func (board *Board) getAllNeighborColorsForGroup(coords []Coord) []string {
 	colors := []string{}
 
@@ -332,6 +343,7 @@ func (board *Board) getAllNeighborColorsForGroup(coords []Coord) []string {
 	return colors
 }
 
+// Return groups of free spaces surrounded by each color
 func (board *Board) getTerritories() Territories {
 	groups := board.getGroupedFreeSpaces()
 
@@ -345,6 +357,8 @@ func (board *Board) getTerritories() Territories {
 			} else {
 				white = append(white, group)
 			}
+		} else {
+			// no-op: if free spaces touch both colors, then they are unclaimed (dame)
 		}
 	}
 
@@ -354,16 +368,12 @@ func (board *Board) getTerritories() Territories {
 	}
 }
 
-func placeSingleKomiInGroup(group []Coord) ([]Coord, Coord) {
-	komi := group[0]
-	group = group[1:]
-	return group, komi
-}
-
+// Place up to 4 white stones in black territory
 func (board *Board) placeKomi(territories Territories) (Territories, []Coord) {
 	komi := []Coord{}
 	for len(territories.BLACK) > 0 {
 		for len(territories.BLACK[0]) > 0 {
+			// place white stones in four black spaces
 			komi = append(komi, territories.BLACK[0][0])
 			territories.BLACK[0] = territories.BLACK[0][1:]
 			if len(territories.BLACK[0]) == 0 {
@@ -387,8 +397,8 @@ func (board *Board) countStones(komi []Coord) StoneCounts {
 	numBlackStones := 0
 	numWhiteStones := len(komi)
 
-	for x := 0; x < len(board.Spaces); x++ {
-		for y := 0; y < len(board.Spaces[x]); y++ {
+	for x := range board.Spaces {
+		for y := range board.Spaces[x] {
 			if board.Spaces[x][y] == BLACK {
 				numBlackStones++
 			} else if board.Spaces[x][y] == WHITE {
@@ -403,6 +413,7 @@ func (board *Board) countStones(komi []Coord) StoneCounts {
 	}
 }
 
+// Returns a copy of board.Spaces so that we can safely add stones for point-counting
 func (board *Board) copySpaces() [][]string {
 	spacesCopy := make([][]string, board.Size)
 	for x := 0; x < board.Size; x++ {
@@ -412,6 +423,7 @@ func (board *Board) copySpaces() [][]string {
 	return spacesCopy
 }
 
+// Adds all remaining stones to the board for point-counting
 func (board *Board) fillBoard(territories Territories, komi []Coord) ([][]string, StoneCounts) {
 	totalsStonesPerPlayer := (board.Size*board.Size - 1) / 2
 	stoneCounts := board.countStones(komi)
@@ -451,6 +463,7 @@ type ScoreData struct {
 	PointDifference float32
 }
 
+// Returns the winner's point lead
 func (board *Board) getPointDifference(winner string, numFreeSpaces int, remaining StoneCounts) float32 {
 	if winner == BLACK {
 		return float32(numFreeSpaces-remaining.BLACK+remaining.WHITE) - 0.5
@@ -458,8 +471,10 @@ func (board *Board) getPointDifference(winner string, numFreeSpaces int, remaini
 		return float32(numFreeSpaces+remaining.BLACK-remaining.WHITE) + 0.5
 	}
 }
+
+// Determines who is winning / has won the game
 func (board *Board) countPoints(spaces [][]string, remaining StoneCounts) ScoreData {
-	freeSpaces := board.getFreeSpaces(spaces)
+	freeSpaces := board.ListSpacesForColor(spaces, FREE)
 	var winner string
 
 	colors := board.getAllNeighborColorsForGroup(freeSpaces)

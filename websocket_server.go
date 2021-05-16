@@ -294,7 +294,7 @@ func onPass(c *SocketClient, data []byte) {
 
 // TODO: onMessage
 
-func RunServer() {
+func RunWebsocketServer() {
 	router := NewRouter()
 	gameManager = NewGameManager()
 	router.Handle("message", onMessage)

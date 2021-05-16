@@ -34,8 +34,8 @@ func (rt *Router) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
-			// only allow requests from port 3000
-			return r.Header.Get("Origin") == "http://localhost:3000"
+			// only allow requests from port 8080
+			return r.Header.Get("Origin") == "http://localhost:8080"
 		},
 	}
 

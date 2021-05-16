@@ -4,16 +4,30 @@ Everyone's favorite game (Go) implemented with everyone's favorite language (Go)
 
 Play it live with a friend at: https://go-play-go.herokuapp.com/
 
-## Other details
+## Design details
 
 - Client app runs on React and Typescript
+- Board is rendered with a responsive, mobile-friendly svg
+- App is configured to run on Heroku
+
+## Gameplay details
+
 - Points are counted using the Ing method (Great explanation at https://senseis.xmp.net/?IngCounting)
 - There is no handling for dead groups during counting! We assume that both players pass after capturing any dead stones, or that they already have decided who won between themselves.
 
 ## How to run locally
 
-- Don't do it yet! I need to make some edits since completing the struggle to get this to deploy correctly on Heroku.
-- If you really want to, run 1. `go build.`, 2. `npm build`, 3. `ENV=PRODUCTION ./go_play_go`
+### Development mode
+
+- Shell #1: `go build . && ./go_play_go
+- Shell #2: `cd app && npm start`
+- Navigate to `http://localhost:3000`
+
+### Production mode
+
+- `npm run build`
+- `go build . && ENV=PRODUCTION PORT=3000 ./go_play_go`
+- Navigate to `http://localhost:3000`
 
 ## Planned features
 

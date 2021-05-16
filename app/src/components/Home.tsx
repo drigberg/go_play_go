@@ -73,7 +73,7 @@ function Home(): JSX.Element {
     const HOST =
       process.env.NODE_ENV === 'production'
         ? location.origin.replace(/^http/, 'ws')
-        : 'ws://localhost:8080';
+        : 'ws://localhost:3001';
     const s = new WebSocket(`${HOST}/socket`);
     setSocket(s);
   }, []);

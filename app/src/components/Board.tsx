@@ -33,7 +33,7 @@ function Board(props: Props): JSX.Element {
   const size = props.gameInfo.Size;
   const rowWidth = width / (size + 1);
   const strokeWidth = width / 200 / (size / 9);
-  const stoneRadius = width / 16 / (size / 9);
+  const stoneRadius = width / 32 / (size / 9);
   const hoshiRadius = width / 80 / (size / 9);
   const hoshiPositions = getHoshiPositions(size);
 

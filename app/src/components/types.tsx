@@ -3,7 +3,6 @@ import {
   boolean,
   constant,
   either,
-  either3,
   either4,
   either5,
   exact,
@@ -22,15 +21,15 @@ import type { Guard } from 'decoders';
 // - https://github.com/microsoft/TypeScript/issues/41882
 // - https://stackoverflow.com/questions/55807329/why-eslint-throws-no-unused-vars-for-typescript-interface
 
-type IncomingMessage$GameJoined = {
-  name: 'gameJoined';
+type IncomingMessage$Remote$GameJoined = {
+  name: 'remote/gameJoined';
   data: {
     GameID: string;
   };
 };
 
-const incomingMessage$GameJoinedDecoder = exact({
-  name: constant<'gameJoined'>('gameJoined'),
+const incomingMessage$Remote$GameJoinedDecoder = exact({
+  name: constant<'remote/gameJoined'>('remote/gameJoined'),
   data: exact({
     GameID: string,
   }),
@@ -63,8 +62,8 @@ export type GameInfo = {
   };
 };
 
-type IncomingMessage$GameInfo = {
-  name: 'gameInfo';
+type IncomingMessage$Remote$GameInfo = {
+  name: 'remote/gameInfo';
   data: GameInfo;
 };
 
@@ -75,7 +74,7 @@ const colorDecoder = either(
 );
 
 const incomingMessage$GameInfoDecoder = exact({
-  name: constant<'gameInfo'>('gameInfo'),
+  name: constant<'remote/gameInfo'>('remote/gameInfo'),
   data: exact({
     Size: number,
     Turn: number,
@@ -100,32 +99,36 @@ const incomingMessage$GameInfoDecoder = exact({
   }),
 });
 
-type IncomingMessage$Update = {
-  name: 'update';
+type IncomingMessage$Remote$Update = {
+  name: 'remote/update';
   data: null;
 };
 
 const incomingMessage$UpdateDecoder = exact({
-  name: constant<'update'>('update'),
+  name: constant<'remote/update'>('remote/update'),
   data: null_,
 });
 
-type IncomingMessage$GameLeft = {
-  name: 'gameLeft';
+type IncomingMessage$Remote$GameLeft = {
+  name: 'remote/gameLeft';
   data: null;
 };
 
-const incomingMessage$GameLeftDecoder = exact({
-  name: constant<'gameLeft'>('gameLeft'),
+const incomingMessage$Remote$GameLeftDecoder = exact({
+  name: constant<'remote/gameLeft'>('remote/gameLeft'),
   data: null_,
 });
 
-type JoinGameError$Data = {
-  Type: 'joinGame';
+type JoinGameError$Remote$Data = {
+  Type: 'remote/joinGame';
 };
 
-type GetGameInfoError$Data = {
-  Type: 'getGameInfo';
+type RejoinGameError$Remote$Data = {
+  Type: 'remote/rejoinGame';
+};
+
+type GetGameInfoError$Remote$Data = {
+  Type: 'remote/getGameInfo';
 };
 
 type Error400$Data = {
@@ -135,36 +138,43 @@ type Error400$Data = {
 
 type IncomingMessage$Error = {
   name: 'error';
-  data: GetGameInfoError$Data | JoinGameError$Data | Error400$Data;
+  data:
+    | GetGameInfoError$Remote$Data
+    | RejoinGameError$Remote$Data
+    | JoinGameError$Remote$Data
+    | Error400$Data;
 };
 
 const incomingMessage$ErrorDecoder = exact({
   name: constant<'error'>('error'),
-  data: either3(
+  data: either4(
     exact({
       Type: constant<'400'>('400'),
       Message: string,
     }),
     exact({
-      Type: constant<'joinGame'>('joinGame'),
+      Type: constant<'remote/rejoinGame'>('remote/rejoinGame'),
     }),
     exact({
-      Type: constant<'getGameInfo'>('getGameInfo'),
+      Type: constant<'remote/joinGame'>('remote/joinGame'),
+    }),
+    exact({
+      Type: constant<'remote/getGameInfo'>('remote/getGameInfo'),
     }),
   ),
 });
 
 type Message =
-  | IncomingMessage$GameJoined
-  | IncomingMessage$GameInfo
-  | IncomingMessage$GameLeft
-  | IncomingMessage$Update
+  | IncomingMessage$Remote$GameJoined
+  | IncomingMessage$Remote$GameInfo
+  | IncomingMessage$Remote$GameLeft
+  | IncomingMessage$Remote$Update
   | IncomingMessage$Error;
 
 const incomingMessageDecoder = either5(
   incomingMessage$GameInfoDecoder,
-  incomingMessage$GameJoinedDecoder,
-  incomingMessage$GameLeftDecoder,
+  incomingMessage$Remote$GameJoinedDecoder,
+  incomingMessage$Remote$GameLeftDecoder,
   incomingMessage$UpdateDecoder,
   incomingMessage$ErrorDecoder,
 );

@@ -115,19 +115,19 @@ function Home(): JSX.Element {
       socket.onmessage = (event) => {
         const message = incomingMessageGuard(JSON.parse(event.data));
         switch (message.name) {
-          case 'gameJoined':
+          case 'remote/gameJoined':
             localStorage.setItem(gameIdKey, message.data.GameID.toString());
             setGameId(message.data.GameID);
             setError(null);
             break;
-          case 'update':
+          case 'remote/update':
             getGameInfo();
             break;
-          case 'gameInfo':
+          case 'remote/gameInfo':
             setGameInfo(message.data);
             setError(null);
             break;
-          case 'gameLeft':
+          case 'remote/gameLeft':
             localStorage.removeItem(gameIdKey);
             setGameId(null);
             setError(null);
@@ -137,12 +137,13 @@ function Home(): JSX.Element {
               case '400':
                 setError(message.data.Message);
                 break;
-              case 'joinGame':
-              case 'getGameInfo':
+              case 'remote/rejoinGame':
+              case 'remote/joinGame':
+              case 'remote/getGameInfo':
                 localStorage.removeItem(gameIdKey);
                 setGameId(null);
                 setError(
-                  'Game not found! Either you typed in an invalid game ID, or the server restarted.',
+                  'Game not found! Either you submitted an invalid game ID, or the server restarted.',
                 );
                 break;
               default:

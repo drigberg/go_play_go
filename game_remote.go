@@ -27,7 +27,10 @@ type GameRemote struct {
 
 // GameRemoteInterface defines methods a GameRemote should implement
 type GameRemoteInterface interface {
-	GetInfo(userID string) GameInfoRemote
+	JoinGame(userID string, socketClient *SocketClient) bool
+	RejoinGame(userID string, socketClient *SocketClient) bool
+	LeaveGame(userID string) bool
+	GetInfo(userID string) (GameInfoRemote, error)
 	GetOtherPlayer(userID string) (*Player, error)
 	GetPlayerColor(userID string) string
 	IsTurn(userID string) bool
@@ -108,8 +111,59 @@ func (gameRemote *GameRemote) Pass() {
 	}
 }
 
+func (gameRemote *GameRemote) JoinGame(userID string, socketClient *SocketClient) bool {
+	if len(gameRemote.Players) >= 2 {
+		return false
+	}
+
+	gameRemote.M.Lock()
+	defer gameRemote.M.Unlock()
+
+	player := Player{
+		UserID:       userID,
+		SocketClient: socketClient,
+	}
+
+	gameRemote.Players[userID] = &player
+	gameRemote.State = "PLAYING"
+	return true
+}
+
+func (gameRemote *GameRemote) LeaveGame(userID string) bool {
+	// return false if player is not part of game
+	if gameRemote.Players[userID] == nil {
+		return false
+	}
+	gameRemote.M.Lock()
+	defer gameRemote.M.Unlock()
+
+	if gameRemote.State != "GAME_OVER_PASSED" {
+		gameRemote.State = "GAME_OVER_FORFEIT"
+	}
+
+	gameRemote.Players[userID].SocketClient = nil
+	return true
+}
+
+func (gameRemote *GameRemote) RejoinGame(userID string, socketClient *SocketClient) bool {
+	// return false if player is not part of game
+	if gameRemote.Players[userID] == nil {
+		return false
+	}
+
+	gameRemote.M.Lock()
+	defer gameRemote.M.Unlock()
+	gameRemote.Players[userID].SocketClient = socketClient
+	return true
+}
+
 // Returns all the information that the client needs for the game state
-func (gameRemote *GameRemote) GetInfo(userID string) GameInfoRemote {
+func (gameRemote *GameRemote) GetInfo(userID string) (GameInfoRemote, error) {
+	// return error if player is not part of game
+	if gameRemote.Players[userID] == nil {
+		return GameInfoRemote{}, errors.New("Cannot get game info")
+	}
+
 	color := gameRemote.GetPlayerColor(userID)
 	Spaces := Spaces{
 		BLACK: gameRemote.Game.Board.ListSpacesForColor(gameRemote.Game.Board.Spaces, BLACK),
@@ -134,5 +188,5 @@ func (gameRemote *GameRemote) GetInfo(userID string) GameInfoRemote {
 		AvailableSpaces: gameRemote.Game.Board.GetAvailableSpaces(color),
 		Spaces:          Spaces,
 		Turn:            gameRemote.Game.Turn,
-	}
+	}, nil
 }

@@ -62,59 +62,40 @@ func (gameManager *GameManager) JoinGame(gameID string, userID string, socketCli
 		return false
 	}
 
-	if len(game.Players) >= 2 {
-		return false
-	}
-
-	game.M.Lock()
-	defer game.M.Unlock()
-
-	player := Player{
-		UserID:       userID,
-		SocketClient: socketClient,
-	}
-
-	game.Players[userID] = &player
-	game.State = "PLAYING"
-	return true
+	joined := game.JoinGame(userID, socketClient)
+	return joined
 }
 
 func (gameManager *GameManager) LeaveGame(gameID string, userID string) bool {
 	game := gameManager.remoteGames[gameID]
-	// return false if no game or player is not part of game
-	if game == nil || game.Players[userID] == nil {
+	if game == nil {
 		return false
 	}
-	game.M.Lock()
-	defer game.M.Unlock()
 
-	if game.State != "GAME_OVER_PASSED" {
-		game.State = "GAME_OVER_FORFEIT"
-	}
-
-	game.Players[userID].SocketClient = nil
-	return true
+	left := game.LeaveGame(userID)
+	return left
 }
 
 func (gameManager *GameManager) RejoinGame(gameID string, userID string, socketClient *SocketClient) bool {
 	game := gameManager.remoteGames[gameID]
-	// return false if no game or player is not part of game
-	if game == nil || game.Players[userID] == nil {
+	if game == nil {
 		return false
 	}
-	game.M.Lock()
-	defer game.M.Unlock()
-	game.Players[userID].SocketClient = socketClient
-	return true
+	rejoined := game.RejoinGame(userID, socketClient)
+	return rejoined
 }
 
 func (gameManager *GameManager) GetGameInfo(gameID string, userID string) (GameInfoRemote, error) {
 	game := gameManager.remoteGames[gameID]
-	// return false if no game or player is not part of game
-	if game == nil || game.Players[userID] == nil {
+	if game == nil {
 		return GameInfoRemote{}, errors.New("Cannot get game info")
 	}
-	return game.GetInfo(userID), nil
+
+	gameInfo, err := game.GetInfo(userID)
+	if err != nil {
+		return GameInfoRemote{}, err
+	}
+	return gameInfo, nil
 }
 
 func (gameManager *GameManager) PlaceStone(gameID string, userID string, coord Coord) bool {
@@ -140,8 +121,12 @@ func (gameManager *GameManager) Pass(gameID string, userID string) bool {
 func (gameManager *GameManager) GetOtherPlayer(gameID string, userID string) (*Player, error) {
 	game := gameManager.remoteGames[gameID]
 	if game == nil {
-		return &Player{}, errors.New("No other player")
+		return &Player{}, errors.New("Game not found")
 	}
 
-	return game.GetOtherPlayer(userID)
+	otherPlayer, err := game.GetOtherPlayer(userID)
+	if err != nil {
+		return &Player{}, err
+	}
+	return otherPlayer, nil
 }

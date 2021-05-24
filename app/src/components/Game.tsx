@@ -3,9 +3,9 @@ import Board from './Board';
 import type {
   Coord,
   GameInfo,
-  OutgoingMessage$LeaveGame,
-  OutgoingMessage$Pass,
-  OutgoingMessage$PlaceStone,
+  OutgoingMessage$LeaveGame$Remote,
+  OutgoingMessage$Pass$Remote,
+  OutgoingMessage$PlaceStone$Remote,
 } from './types';
 
 type Props = {
@@ -22,8 +22,8 @@ function Game(props: Props): JSX.Element {
   }, []);
 
   function leaveGame() {
-    const message: OutgoingMessage$LeaveGame = {
-      name: 'leaveGameRemote',
+    const message: OutgoingMessage$LeaveGame$Remote = {
+      name: 'remote/leaveGame',
       data: {
         userID: props.userId,
         gameID: props.gameId,
@@ -49,8 +49,8 @@ function Game(props: Props): JSX.Element {
   }
 
   function placeStone(coord: Coord) {
-    const message: OutgoingMessage$PlaceStone = {
-      name: 'placeStone',
+    const message: OutgoingMessage$PlaceStone$Remote = {
+      name: 'remote/placeStone',
       data: {
         userID: props.userId,
         gameID: props.gameId,
@@ -61,8 +61,8 @@ function Game(props: Props): JSX.Element {
   }
 
   function pass() {
-    const message: OutgoingMessage$Pass = {
-      name: 'pass',
+    const message: OutgoingMessage$Pass$Remote = {
+      name: 'remote/pass',
       data: {
         userID: props.userId,
         gameID: props.gameId,

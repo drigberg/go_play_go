@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import type {
-  OutgoingMessage$JoinGame,
-  OutgoingMessage$CreateGame,
+  OutgoingMessage$JoinGame$Remote,
+  OutgoingMessage$CreateGame$Remote,
 } from './types';
 
 type Props = {
@@ -18,8 +18,8 @@ function Lobby(props: Props): JSX.Element {
     if (createGameSize === null) {
       return;
     }
-    const message: OutgoingMessage$CreateGame = {
-      name: 'createGameRemote',
+    const message: OutgoingMessage$CreateGame$Remote = {
+      name: 'remote/createGame',
       data: {
         userID: props.userId,
         size: createGameSize,
@@ -32,8 +32,8 @@ function Lobby(props: Props): JSX.Element {
     if (props.joinGameId === null) {
       return;
     }
-    const message: OutgoingMessage$JoinGame = {
-      name: 'joinGameRemote',
+    const message: OutgoingMessage$JoinGame$Remote = {
+      name: 'remote/joinGame',
       data: {
         userID: props.userId,
         gameID: props.joinGameId,

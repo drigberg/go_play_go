@@ -5,8 +5,8 @@ import { incomingMessageGuard } from './types';
 import { nanoid } from 'nanoid';
 import type {
   GameInfo,
-  OutgoingMessage$GetGameInfo,
-  OutgoingMessage$JoinGame,
+  OutgoingMessage$GetGameInfo$Remote,
+  OutgoingMessage$RejoinGame$Remote,
 } from './types';
 
 const userIdKey = 'goPlayGo.userId';
@@ -45,8 +45,8 @@ function Home(): JSX.Element {
     if (userId === null || gameId === null || socket === null) {
       return;
     }
-    const message: OutgoingMessage$JoinGame = {
-      name: 'joinGameRemote',
+    const message: OutgoingMessage$RejoinGame$Remote = {
+      name: 'remote/rejoinGame',
       data: {
         userID: userId,
         gameID: gameId,
@@ -57,8 +57,8 @@ function Home(): JSX.Element {
 
   function getGameInfo() {
     if (gameId && userId && socket) {
-      const message: OutgoingMessage$GetGameInfo = {
-        name: 'getGameInfo',
+      const message: OutgoingMessage$GetGameInfo$Remote = {
+        name: 'remote/getGameInfo',
         data: {
           userID: userId,
           gameID: gameId,

@@ -173,48 +173,64 @@ export const incomingMessageGuard: Guard<Message> = guard(
   incomingMessageDecoder,
 );
 
-export type OutgoingMessage$GetGameInfo = {
-  name: 'getGameInfo';
+export type OutgoingMessage$GetGameInfo$Remote = {
+  name: 'remote/getGameInfo';
   data: {
     userID: string;
     gameID: string;
   };
 };
 
-export type OutgoingMessage$JoinGame = {
-  name: 'joinGameRemote';
+export type OutgoingMessage$RejoinGame$Remote = {
+  name: 'remote/rejoinGame';
   data: {
     userID: string;
     gameID: string;
   };
 };
 
-export type OutgoingMessage$CreateGame = {
-  name: 'createGameRemote';
+export type OutgoingMessage$JoinGame$Remote = {
+  name: 'remote/joinGame';
+  data: {
+    userID: string;
+    gameID: string;
+  };
+};
+
+export type OutgoingMessage$CreateGame$Remote = {
+  name: 'remote/createGame';
   data: {
     userID: string;
     size: number;
   };
 };
 
-export type OutgoingMessage$LeaveGame = {
-  name: 'leaveGameRemote';
+export type OutgoingMessage$CreateGame$Local = {
+  name: 'local/createGame';
+  data: {
+    userID: string;
+    size: number;
+  };
+};
+
+export type OutgoingMessage$LeaveGame$Remote = {
+  name: 'remote/leaveGame';
   data: {
     userID: string;
     gameID: string;
   };
 };
 
-export type OutgoingMessage$Pass = {
-  name: 'pass';
+export type OutgoingMessage$Pass$Remote = {
+  name: 'remote/pass';
   data: {
     userID: string;
     gameID: string;
   };
 };
 
-export type OutgoingMessage$PlaceStone = {
-  name: 'placeStone';
+export type OutgoingMessage$PlaceStone$Remote = {
+  name: 'remote/placeStone';
   data: {
     gameID: string;
     userID: string;

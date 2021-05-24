@@ -11,6 +11,11 @@ type Game struct {
 	LastPlayerPassed bool
 }
 
+type Spaces struct {
+	BLACK []Coord
+	WHITE []Coord
+}
+
 // GameInterface defines methods a Game should implement
 type GameInterface interface {
 	Pass() bool

@@ -56,11 +56,6 @@ func NewGameRemote(gameID string, userID string, size int, socketClient *SocketC
 	}
 }
 
-type Spaces struct {
-	BLACK []Coord
-	WHITE []Coord
-}
-
 type GameInfoRemote struct {
 	Size            int
 	Turn            int

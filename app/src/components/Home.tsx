@@ -15,6 +15,7 @@ const gameIdKey = 'goPlayGo.gameIdKey';
 function Home(): JSX.Element {
   const [backoffSeconds, setBackoffSeconds] = useState<number>(0);
   const [connected, setConnected] = useState<boolean>(false);
+  const [connectionCounter, setConnectionCounter] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
@@ -153,7 +154,27 @@ function Home(): JSX.Element {
         }
       };
     }
-  }, [socket, gameId, userId]);
+  }, [socket, gameId, userId, backoffSeconds]);
+
+  useEffect(() => {
+    if (!connected) {
+      const intervalId = setInterval(() => {
+        setConnectionCounter(connectionCounter + 1);
+      }, 500);
+
+      return () => {
+        clearInterval(intervalId);
+      };
+    }
+  }, [connected, connectionCounter]);
+
+  function getConnectingDots() {
+    let dots = '';
+    for (let i = 0; i < (connectionCounter % 3) + 1; i++) {
+      dots += '.';
+    }
+    return dots;
+  }
 
   return (
     <div style={{ textAlign: 'center' }}>
@@ -161,7 +182,7 @@ function Home(): JSX.Element {
       {error && <h3 style={{ color: 'red' }}>Error: {error}</h3>}
       {!connected && (
         <div>
-          <p>Not connected! Try refreshing.</p>
+          <p>Connecting{getConnectingDots()}</p>
         </div>
       )}
       {socket && connected && userId && (

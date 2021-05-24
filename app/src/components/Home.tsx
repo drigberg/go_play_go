@@ -13,6 +13,7 @@ const userIdKey = 'goPlayGo.userId';
 const gameIdKey = 'goPlayGo.gameIdKey';
 
 function Home(): JSX.Element {
+  const [backoffSeconds, setBackoffSeconds] = useState<number>(0);
   const [connected, setConnected] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
@@ -69,14 +70,20 @@ function Home(): JSX.Element {
   }
 
   useEffect(() => {
-    // TODO: reconnect with backoff if disconnected
-    const HOST =
-      process.env.NODE_ENV === 'production'
-        ? location.origin.replace(/^http/, 'ws')
-        : 'ws://localhost:3001';
-    const s = new WebSocket(`${HOST}/socket`);
-    setSocket(s);
-  }, []);
+    if (!socket) {
+      console.log(`Waiting ${backoffSeconds} seconds before connecting...`);
+      setTimeout(() => {
+        console.log('Connecting...');
+        // TODO: reconnect with backoff if disconnected
+        const HOST =
+          process.env.NODE_ENV === 'production'
+            ? location.origin.replace(/^http/, 'ws')
+            : 'ws://localhost:3001';
+        const s = new WebSocket(`${HOST}/socket`);
+        setSocket(s);
+      }, backoffSeconds * 1000);
+    }
+  }, [socket]);
 
   useEffect(() => {
     // Reset callbacks whenever gameId or userId are updated, so that we never reference
@@ -84,6 +91,7 @@ function Home(): JSX.Element {
     if (socket) {
       socket.onopen = () => {
         console.log('Connected!');
+        setBackoffSeconds(0);
         setConnected(true);
         setError(null);
         // Ensure that the server is aware of the new socket connection: we might have refreshed
@@ -91,14 +99,17 @@ function Home(): JSX.Element {
       };
 
       socket.onclose = () => {
+        let newBackoffSeconds = backoffSeconds + 1;
+        if (newBackoffSeconds > 5) {
+          newBackoffSeconds = 5;
+        }
+        setBackoffSeconds(newBackoffSeconds);
         console.log('Disconnected!');
+        setSocket(null);
         setConnected(false);
       };
 
-      socket.onerror = (event) => {
-        console.error('Error:', event);
-        setError('Something went wrong!');
-      };
+      // we don't have a `socket.onerror` callback because the `event` information is not helpful
 
       socket.onmessage = (event) => {
         const message = incomingMessageGuard(JSON.parse(event.data));

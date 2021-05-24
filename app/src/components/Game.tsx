@@ -23,7 +23,7 @@ function Game(props: Props): JSX.Element {
 
   function leaveGame() {
     const message: OutgoingMessage$LeaveGame = {
-      name: 'leaveGame',
+      name: 'leaveGameRemote',
       data: {
         userID: props.userId,
         gameID: props.gameId,

@@ -19,7 +19,7 @@ function Lobby(props: Props): JSX.Element {
       return;
     }
     const message: OutgoingMessage$CreateGame = {
-      name: 'createGame',
+      name: 'createGameRemote',
       data: {
         userID: props.userId,
         size: createGameSize,
@@ -33,7 +33,7 @@ function Lobby(props: Props): JSX.Element {
       return;
     }
     const message: OutgoingMessage$JoinGame = {
-      name: 'joinGame',
+      name: 'joinGameRemote',
       data: {
         userID: props.userId,
         gameID: props.joinGameId,

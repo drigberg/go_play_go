@@ -19,6 +19,7 @@ type GameLocal struct {
 
 // GameLocalInterface defines methods a GameLocal should implement
 type GameLocalInterface interface {
+	RejoinGame(userID string, socketClient *SocketClient) bool
 	GetInfo() GameInfoLocal
 	CurrentTurnColor() string
 	Pass()
@@ -54,6 +55,18 @@ type GameInfoLocal struct {
 	CurrentTurnColor string
 	AvailableSpaces  []Coord
 	Spaces           Spaces
+}
+
+func (gameLocal *GameLocal) RejoinGame(userID string, socketClient *SocketClient) bool {
+	// return false if player is not part of game
+	if gameLocal.UserID != userID {
+		return false
+	}
+
+	gameLocal.M.Lock()
+	defer gameLocal.M.Unlock()
+	gameLocal.SocketClient = socketClient
+	return true
 }
 
 func (gameLocal *GameLocal) CurrentTurnColor() string {

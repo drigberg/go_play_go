@@ -69,8 +69,8 @@ func createGetGameInfoError() Message {
 	}
 }
 
-func onCreateGame(c *SocketClient, data []byte) {
-	log.Println("Request: createGame")
+func onCreateGameLocal(c *SocketClient, data []byte) {
+	log.Println("Request: createGameLocal")
 
 	// parse and validate request
 	var req CreateGameRequest
@@ -86,11 +86,36 @@ func onCreateGame(c *SocketClient, data []byte) {
 	}
 
 	// Create game
-	game := gameManager.CreateGame(userID, size, c)
+	gameID := gameManager.CreateGameLocal(userID, size, c)
 
 	// set and write response message
-	log.Println("Player " + userID + " created game " + game.ID)
-	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: game.ID}}
+	log.Println("Player " + userID + " created game " + gameID)
+	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
+	c.Write()
+}
+
+func onCreateGameRemote(c *SocketClient, data []byte) {
+	log.Println("Request: createGameRemote")
+
+	// parse and validate request
+	var req CreateGameRequest
+	json.Unmarshal(data, &req)
+	userID := req.UserID
+	size := req.Size
+
+	if userID == "" || (size != 9 && size != 13 && size != 19) {
+		log.Println("Invalid request format")
+		c.send = create400Error("Invalid request format")
+		c.Write()
+		return
+	}
+
+	// Create game
+	gameID := gameManager.CreateGameRemote(userID, size, c)
+
+	// set and write response message
+	log.Println("Player " + userID + " created game " + gameID)
+	c.send = Message{Name: "gameJoined", Data: GameIdData{GameID: gameID}}
 	c.Write()
 }
 
@@ -112,8 +137,8 @@ func sendOtherPlayerUpdate(gameID string, userID string) {
 	}
 }
 
-func onJoinGame(c *SocketClient, data []byte) {
-	log.Println("Request: joinGame")
+func onJoinGameRemote(c *SocketClient, data []byte) {
+	log.Println("Request: joinGameRemote")
 
 	// parse and validate request
 	var req JoinGameRequest
@@ -131,7 +156,7 @@ func onJoinGame(c *SocketClient, data []byte) {
 	// Rejoin game if already registered, or register as part of game
 	joined := gameManager.RejoinGame(gameID, userID, c)
 	if !joined {
-		joined = gameManager.JoinGame(gameID, userID, c)
+		joined = gameManager.JoinGameRemote(gameID, userID, c)
 	}
 
 	if !joined {
@@ -154,8 +179,8 @@ type LeaveGameRequest struct {
 	GameID string
 }
 
-func onLeaveGame(c *SocketClient, data []byte) {
-	log.Println("Request: leaveGame")
+func onLeaveGameRemote(c *SocketClient, data []byte) {
+	log.Println("Request: leaveGameRemote")
 
 	// parse and validate request
 	var req LeaveGameRequest
@@ -171,7 +196,7 @@ func onLeaveGame(c *SocketClient, data []byte) {
 	}
 
 	// Mark game as over
-	left := gameManager.LeaveGame(gameID, userID)
+	left := gameManager.LeaveGameRemote(gameID, userID)
 	if !left {
 		log.Println("Player " + userID + " could not leave game " + gameID)
 		c.send = create400Error("Unable to leave game")
@@ -297,12 +322,13 @@ func RunServer(port string) {
 	router := NewRouter(port)
 	gameManager = NewGameManager()
 	router.Handle("message", onMessage)
-	router.Handle("createGame", onCreateGame)
-	router.Handle("joinGame", onJoinGame)
+	router.Handle("createGameLocal", onCreateGameLocal)
+	router.Handle("createGameRemote", onCreateGameRemote)
+	router.Handle("joinGameRemote", onJoinGameRemote)
 	router.Handle("getGameInfo", onGetGameInfo)
 	router.Handle("placeStone", onPlaceStone)
 	router.Handle("pass", onPass)
-	router.Handle("leaveGame", onLeaveGame)
+	router.Handle("leaveGameRemote", onLeaveGameRemote)
 
 	// handle all requests to /, upgrade to WebSocket via our router handler.
 	http.Handle("/socket", router)

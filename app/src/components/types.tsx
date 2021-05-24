@@ -182,7 +182,7 @@ export type OutgoingMessage$GetGameInfo = {
 };
 
 export type OutgoingMessage$JoinGame = {
-  name: 'joinGame';
+  name: 'joinGameRemote';
   data: {
     userID: string;
     gameID: string;
@@ -190,7 +190,7 @@ export type OutgoingMessage$JoinGame = {
 };
 
 export type OutgoingMessage$CreateGame = {
-  name: 'createGame';
+  name: 'createGameRemote';
   data: {
     userID: string;
     size: number;
@@ -198,7 +198,7 @@ export type OutgoingMessage$CreateGame = {
 };
 
 export type OutgoingMessage$LeaveGame = {
-  name: 'leaveGame';
+  name: 'leaveGameRemote';
   data: {
     userID: string;
     gameID: string;

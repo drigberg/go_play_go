@@ -46,7 +46,7 @@ function Home(): JSX.Element {
       return;
     }
     const message: OutgoingMessage$JoinGame = {
-      name: 'joinGame',
+      name: 'joinGameRemote',
       data: {
         userID: userId,
         gameID: gameId,

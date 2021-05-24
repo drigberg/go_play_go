@@ -17,12 +17,12 @@ type Player struct {
 }
 
 type GameRemote struct {
-	M                sync.Mutex
-	Game             Game
-	ID               string
-	Players          map[string]*Player
-	FirstPlayerID    string
-	State            string
+	M             sync.Mutex
+	Game          Game
+	ID            string
+	Players       map[string]*Player
+	FirstPlayerID string
+	State         string
 }
 
 // GameRemoteInterface defines methods a GameRemote should implement
@@ -52,7 +52,7 @@ func NewGameRemote(gameID string, userID string, size int, socketClient *SocketC
 		State:         "WAITING_FOR_OPPONENT",
 		FirstPlayerID: userID,
 		Players:       players,
-		Game: NewGame(size),
+		Game:          NewGame(size),
 	}
 }
 

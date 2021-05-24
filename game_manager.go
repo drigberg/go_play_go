@@ -8,7 +8,7 @@ import (
 
 // GameManager handles all requests and game states
 type GameManager struct {
-	M     sync.Mutex
+	M           sync.Mutex
 	remoteGames map[string]*GameRemote
 }
 

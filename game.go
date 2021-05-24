@@ -23,7 +23,7 @@ var _ GameInterface = (*Game)(nil)
 // New creates an empty board
 func NewGame(size int) Game {
 	return Game{
-		Turn: 1,
+		Turn:  1,
 		Board: NewBoard(size),
 	}
 }

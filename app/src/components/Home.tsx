@@ -24,6 +24,7 @@ function Home(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
+  const [gameType, setGameType] = useState<string | null>(null);
   const [gameInfoRemote, setGameInfoRemote] =
     useState<GameInfo$Remote | null>(null);
   const [gameInfoLocal, setGameInfoLocal] =
@@ -46,6 +47,13 @@ function Home(): JSX.Element {
     const gameIdStored = localStorage.getItem(gameIdKey);
     if (gameIdStored) {
       setGameId(gameIdStored);
+    }
+  }
+
+  if (gameType === null) {
+    const gameTypeStored = localStorage.getItem(gameTypeKey);
+    if (gameTypeStored) {
+      setGameType(gameTypeStored);
     }
   }
 
@@ -156,7 +164,6 @@ function Home(): JSX.Element {
 
       socket.onmessage = (event) => {
         const message = incomingMessageGuard(JSON.parse(event.data));
-        console.log(message);
         switch (message.name) {
           case 'local/gameInfo':
             setGameInfoLocal(message.data);
@@ -165,6 +172,7 @@ function Home(): JSX.Element {
           case 'local/gameJoined':
             localStorage.setItem(gameIdKey, message.data.GameID.toString());
             localStorage.setItem(gameTypeKey, 'LOCAL');
+            setGameType('LOCAL');
             setGameId(message.data.GameID);
             setGameInfoRemote(null);
             setError(null);
@@ -175,6 +183,7 @@ function Home(): JSX.Element {
           case 'remote/gameJoined':
             localStorage.setItem(gameIdKey, message.data.GameID.toString());
             localStorage.setItem(gameTypeKey, 'REMOTE');
+            setGameType('REMOTE');
             setGameId(message.data.GameID);
             setGameInfoLocal(null);
             setError(null);
@@ -192,6 +201,7 @@ function Home(): JSX.Element {
             localStorage.removeItem(gameIdKey);
             localStorage.removeItem(gameTypeKey);
             setGameId(null);
+            setGameType(null);
             setError(null);
             setGameInfoRemote(null);
             break;
@@ -269,7 +279,7 @@ function Home(): JSX.Element {
               setJoinGameId={setJoinGameId}
             />
           )}
-          {gameId !== null && gameInfoRemote && (
+          {gameId !== null && gameType === 'REMOTE' && (
             <GameRemote
               socket={socket}
               gameId={gameId}
@@ -278,7 +288,7 @@ function Home(): JSX.Element {
               getGameInfo={() => getGameInfoRemote()}
             />
           )}
-          {gameId !== null && gameInfoLocal && (
+          {gameId !== null && gameType === 'LOCAL' && (
             <GameLocal
               socket={socket}
               gameId={gameId}
@@ -289,6 +299,7 @@ function Home(): JSX.Element {
                 localStorage.removeItem(gameIdKey);
                 localStorage.removeItem(gameTypeKey);
                 setGameId(null);
+                setGameType(null);
                 setError(null);
                 setGameInfoLocal(null);
               }}

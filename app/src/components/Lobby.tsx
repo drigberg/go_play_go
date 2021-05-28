@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import type {
-  OutgoingMessage$JoinGame,
-  OutgoingMessage$CreateGame,
+  OutgoingMessage$JoinGame$Remote,
+  OutgoingMessage$CreateGame$Local,
+  OutgoingMessage$CreateGame$Remote,
 } from './types';
 
 type Props = {
@@ -14,12 +15,26 @@ type Props = {
 function Lobby(props: Props): JSX.Element {
   const [createGameSize, setCreateGameSize] = useState<number | null>(null);
 
-  function createGame() {
+  function createRemoteGame() {
     if (createGameSize === null) {
       return;
     }
-    const message: OutgoingMessage$CreateGame = {
-      name: 'createGame',
+    const message: OutgoingMessage$CreateGame$Remote = {
+      name: 'remote/createGame',
+      data: {
+        userID: props.userId,
+        size: createGameSize,
+      },
+    };
+    props.socket.send(JSON.stringify(message));
+  }
+
+  function createLocalGame() {
+    if (createGameSize === null) {
+      return;
+    }
+    const message: OutgoingMessage$CreateGame$Local = {
+      name: 'local/createGame',
       data: {
         userID: props.userId,
         size: createGameSize,
@@ -32,8 +47,8 @@ function Lobby(props: Props): JSX.Element {
     if (props.joinGameId === null) {
       return;
     }
-    const message: OutgoingMessage$JoinGame = {
-      name: 'joinGame',
+    const message: OutgoingMessage$JoinGame$Remote = {
+      name: 'remote/joinGame',
       data: {
         userID: props.userId,
         gameID: props.joinGameId,
@@ -53,7 +68,7 @@ function Lobby(props: Props): JSX.Element {
   return (
     <div>
       <h2>Create or join a game!</h2>
-      <div>
+      <div style={{ margin: '5px' }}>
         <button
           style={getSizeButtonStyle(9)}
           onClick={() => setCreateGameSize(9)}
@@ -72,18 +87,23 @@ function Lobby(props: Props): JSX.Element {
         >
           19x19
         </button>
-        <button disabled={createGameSize === null} onClick={createGame}>
-          Create Game
+      </div>
+      <div style={{ margin: '5px' }}>
+        <button disabled={createGameSize === null} onClick={createRemoteGame}>
+          Create Online Game
+        </button>
+        <button disabled={createGameSize === null} onClick={createLocalGame}>
+          Create Local Game
         </button>
       </div>
-      <div>
+      <div style={{ margin: '5px' }}>
         <input
           type="text"
           placeholder="gameId"
           onChange={(e) => props.setJoinGameId(e.target.value)}
         />
         <button onClick={joinGame} disabled={props.joinGameId === null}>
-          Join Game
+          Join Online Game
         </button>
       </div>
     </div>

@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import Lobby from './Lobby';
-import Game from './Game';
+import GameLocal from './GameLocal';
+import GameRemote from './GameRemote';
 import { incomingMessageGuard } from './types';
 import { nanoid } from 'nanoid';
 import type {
-  GameInfo,
-  OutgoingMessage$GetGameInfo,
-  OutgoingMessage$JoinGame,
+  GameInfo$Local,
+  GameInfo$Remote,
+  OutgoingMessage$GetGameInfo$Local,
+  OutgoingMessage$RejoinGame$Local,
+  OutgoingMessage$GetGameInfo$Remote,
+  OutgoingMessage$RejoinGame$Remote,
 } from './types';
 
 const userIdKey = 'goPlayGo.userId';
-const gameIdKey = 'goPlayGo.gameIdKey';
+const gameIdKey = 'goPlayGo.gameId';
+const gameTypeKey = 'goPlayGo.gameType';
 
 function Home(): JSX.Element {
   const [backoffSeconds, setBackoffSeconds] = useState<number>(0);
@@ -19,7 +24,11 @@ function Home(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
-  const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  const [gameType, setGameType] = useState<string | null>(null);
+  const [gameInfoRemote, setGameInfoRemote] =
+    useState<GameInfo$Remote | null>(null);
+  const [gameInfoLocal, setGameInfoLocal] =
+    useState<GameInfo$Local | null>(null);
   const [joinGameId, setJoinGameId] = useState<string | null>(null);
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
@@ -41,12 +50,19 @@ function Home(): JSX.Element {
     }
   }
 
-  function rejoinGame() {
+  if (gameType === null) {
+    const gameTypeStored = localStorage.getItem(gameTypeKey);
+    if (gameTypeStored) {
+      setGameType(gameTypeStored);
+    }
+  }
+
+  function rejoinGameLocal() {
     if (userId === null || gameId === null || socket === null) {
       return;
     }
-    const message: OutgoingMessage$JoinGame = {
-      name: 'joinGame',
+    const message: OutgoingMessage$RejoinGame$Local = {
+      name: 'local/rejoinGame',
       data: {
         userID: userId,
         gameID: gameId,
@@ -55,10 +71,39 @@ function Home(): JSX.Element {
     socket.send(JSON.stringify(message));
   }
 
-  function getGameInfo() {
+  function rejoinGameRemote() {
+    if (userId === null || gameId === null || socket === null) {
+      return;
+    }
+    const message: OutgoingMessage$RejoinGame$Remote = {
+      name: 'remote/rejoinGame',
+      data: {
+        userID: userId,
+        gameID: gameId,
+      },
+    };
+    socket.send(JSON.stringify(message));
+  }
+
+  function getGameInfoRemote() {
     if (gameId && userId && socket) {
-      const message: OutgoingMessage$GetGameInfo = {
-        name: 'getGameInfo',
+      const message: OutgoingMessage$GetGameInfo$Remote = {
+        name: 'remote/getGameInfo',
+        data: {
+          userID: userId,
+          gameID: gameId,
+        },
+      };
+      socket.send(JSON.stringify(message));
+    } else {
+      setError("Can't get game info: try refreshing the page");
+    }
+  }
+
+  function getGameInfoLocal() {
+    if (gameId && userId && socket) {
+      const message: OutgoingMessage$GetGameInfo$Local = {
+        name: 'local/getGameInfo',
         data: {
           userID: userId,
           gameID: gameId,
@@ -96,7 +141,12 @@ function Home(): JSX.Element {
         setConnected(true);
         setError(null);
         // Ensure that the server is aware of the new socket connection: we might have refreshed
-        rejoinGame();
+        const gameType = localStorage.getItem(gameTypeKey);
+        if (gameType === 'LOCAL') {
+          rejoinGameLocal();
+        } else if (gameType === 'REMOTE') {
+          rejoinGameRemote();
+        }
       };
 
       socket.onclose = () => {
@@ -115,34 +165,68 @@ function Home(): JSX.Element {
       socket.onmessage = (event) => {
         const message = incomingMessageGuard(JSON.parse(event.data));
         switch (message.name) {
-          case 'gameJoined':
+          case 'local/gameInfo':
+            setGameInfoLocal(message.data);
+            setError(null);
+            break;
+          case 'local/gameJoined':
             localStorage.setItem(gameIdKey, message.data.GameID.toString());
+            localStorage.setItem(gameTypeKey, 'LOCAL');
+            setGameType('LOCAL');
             setGameId(message.data.GameID);
+            setGameInfoRemote(null);
             setError(null);
             break;
-          case 'update':
-            getGameInfo();
+          case 'local/update':
+            getGameInfoLocal();
             break;
-          case 'gameInfo':
-            setGameInfo(message.data);
+          case 'remote/gameJoined':
+            localStorage.setItem(gameIdKey, message.data.GameID.toString());
+            localStorage.setItem(gameTypeKey, 'REMOTE');
+            setGameType('REMOTE');
+            setGameId(message.data.GameID);
+            setGameInfoLocal(null);
             setError(null);
             break;
-          case 'gameLeft':
+          case 'remote/update':
+            getGameInfoRemote();
+            break;
+          case 'remote/gameInfo':
+            setGameInfoRemote(message.data);
+            setError(null);
+            break;
+          case 'remote/gameLeft':
+            // For remote games, we don't leave until we're sure that the server is aware that we've left, so that
+            // the other player is made aware that the game is over.
             localStorage.removeItem(gameIdKey);
+            localStorage.removeItem(gameTypeKey);
             setGameId(null);
+            setGameType(null);
             setError(null);
+            setGameInfoRemote(null);
             break;
           case 'error':
             switch (message.data.Type) {
               case '400':
                 setError(message.data.Message);
                 break;
-              case 'joinGame':
-              case 'getGameInfo':
+              case 'local/rejoinGame':
+              case 'local/getGameInfo':
                 localStorage.removeItem(gameIdKey);
                 setGameId(null);
+                setGameInfoLocal(null);
                 setError(
-                  'Game not found! Either you typed in an invalid game ID, or the server restarted.',
+                  'Game not found! Either you submitted an invalid game ID, or the server restarted.',
+                );
+                break;
+              case 'remote/rejoinGame':
+              case 'remote/joinGame':
+              case 'remote/getGameInfo':
+                localStorage.removeItem(gameIdKey);
+                setGameId(null);
+                setGameInfoRemote(null);
+                setError(
+                  'Game not found! Either you submitted an invalid game ID, or the server restarted.',
                 );
                 break;
               default:
@@ -187,21 +271,39 @@ function Home(): JSX.Element {
       )}
       {socket && connected && userId && (
         <div>
-          {gameId === null ? (
+          {gameId === null && (
             <Lobby
               userId={userId}
               socket={socket}
               joinGameId={joinGameId}
               setJoinGameId={setJoinGameId}
             />
-          ) : (
-            <Game
+          )}
+          {gameId !== null && gameType === 'REMOTE' && (
+            <GameRemote
               socket={socket}
               gameId={gameId}
               userId={userId}
-              gameInfo={gameInfo}
-              getGameInfo={() => getGameInfo()}
-            ></Game>
+              gameInfo={gameInfoRemote}
+              getGameInfo={() => getGameInfoRemote()}
+            />
+          )}
+          {gameId !== null && gameType === 'LOCAL' && (
+            <GameLocal
+              socket={socket}
+              gameId={gameId}
+              userId={userId}
+              gameInfo={gameInfoLocal}
+              getGameInfo={() => getGameInfoLocal()}
+              leaveGame={() => {
+                localStorage.removeItem(gameIdKey);
+                localStorage.removeItem(gameTypeKey);
+                setGameId(null);
+                setGameType(null);
+                setError(null);
+                setGameInfoLocal(null);
+              }}
+            />
           )}
         </div>
       )}

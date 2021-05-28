@@ -8,22 +8,29 @@ import (
 
 // GameManager handles all requests and game states
 type GameManager struct {
-	M     sync.Mutex
-	games map[string]*Game
+	M           sync.Mutex
+	remoteGames map[string]*GameRemote
+	localGames  map[string]*GameLocal
 }
 
 const idChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 
 // GameManagerInterface defines methods a Game should implement
 type GameManagerInterface interface {
-	CreateGame(userID string, size int, socketClient *SocketClient) *Game
-	GetGameInfo(gameID string, userID string) (GameInfo, error)
-	GetOtherPlayer(gameID string, userID string) (*Player, error)
-	LeaveGame(gameID string, userID string) bool
-	JoinGame(gameID string, userID string, socketClient *SocketClient) bool
-	RejoinGame(gameID string, userID string, socketClient *SocketClient) bool
-	Pass(gameID string, userID string) bool
-	PlaceStone(gameID string, userID string, coord Coord) bool
+	CreateGameLocal(userID string, size int, socketClient *SocketClient) string
+	CreateGameRemote(userID string, size int, socketClient *SocketClient) string
+	GetGameInfoLocal(gameID string, userID string) (GameInfoLocal, error)
+	GetGameInfoRemote(gameID string, userID string) (GameInfoRemote, error)
+	RejoinGameLocal(gameID string, userID string, socketClient *SocketClient) bool
+	RejoinGameRemote(gameID string, userID string, socketClient *SocketClient) bool
+	PassLocal(gameID string, userID string) bool
+	PassRemote(gameID string, userID string) bool
+	PlaceStoneLocal(gameID string, userID string, coord Coord) bool
+	PlaceStoneRemote(gameID string, userID string, coord Coord) bool
+	// remote-only methods
+	LeaveGameRemote(gameID string, userID string) bool
+	GetOtherPlayerRemote(gameID string, userID string) (*Player, error)
+	JoinGameRemote(gameID string, userID string, socketClient *SocketClient) bool
 }
 
 // assert that GameManager implements GameManagerInterface
@@ -32,7 +39,8 @@ var _ GameManagerInterface = (*GameManager)(nil)
 // NewServer creates a GameManager instance
 func NewGameManager() GameManager {
 	return GameManager{
-		games: make(map[string]*Game),
+		localGames: make(map[string]*GameLocal),
+		remoteGames: make(map[string]*GameRemote),
 	}
 }
 
@@ -45,94 +53,81 @@ func (gameManager *GameManager) createGameId() string {
 	return string(b)
 }
 
-func (gameManager *GameManager) CreateGame(userID string, size int, socketClient *SocketClient) *Game {
+func (gameManager *GameManager) CreateGameLocal(userID string, size int, socketClient *SocketClient) string {
 	gameManager.M.Lock()
 	defer gameManager.M.Unlock()
 
-	player := Player{
-		UserID:       userID,
-		SocketClient: socketClient,
-	}
-	players := make(map[string]*Player)
-	players[userID] = &player
+	gameID := gameManager.createGameId()
+	game := NewGameLocal(gameID, userID, size, socketClient)
+	gameManager.localGames[gameID] = &game
+
+	return gameID
+}
+
+func (gameManager *GameManager) CreateGameRemote(userID string, size int, socketClient *SocketClient) string {
+	gameManager.M.Lock()
+	defer gameManager.M.Unlock()
 
 	gameID := gameManager.createGameId()
-	game := Game{
-		ID:            gameID,
-		State:         "WAITING_FOR_OPPONENT",
-		FirstPlayerID: userID,
-		Players:       players,
-		Turn:          1,
-		Board:         NewBoard(size),
-	}
+	game := NewGameRemote(gameID, userID, size, socketClient)
+	gameManager.remoteGames[gameID] = &game
 
-	gameManager.games[gameID] = &game
-	return &game
+	return gameID
 }
 
-func (gameManager *GameManager) JoinGame(gameID string, userID string, socketClient *SocketClient) bool {
-	game := gameManager.games[gameID]
-	if game == nil {
+func (gameManager *GameManager) RejoinGameLocal(gameID string, userID string, socketClient *SocketClient) bool {
+	game := gameManager.localGames[gameID]
+	if game == nil || game.UserID != userID {
 		return false
 	}
-
-	if len(game.Players) >= 2 {
-		return false
-	}
-
-	game.M.Lock()
-	defer game.M.Unlock()
-
-	player := Player{
-		UserID:       userID,
-		SocketClient: socketClient,
-	}
-
-	game.Players[userID] = &player
-	game.State = "PLAYING"
-	return true
+	rejoined := game.RejoinGame(userID, socketClient)
+	return rejoined
 }
 
-func (gameManager *GameManager) LeaveGame(gameID string, userID string) bool {
-	game := gameManager.games[gameID]
-	// return false if no game or player is not part of game
+func (gameManager *GameManager) RejoinGameRemote(gameID string, userID string, socketClient *SocketClient) bool {
+	game := gameManager.remoteGames[gameID]
 	if game == nil || game.Players[userID] == nil {
 		return false
 	}
-	game.M.Lock()
-	defer game.M.Unlock()
-
-	if game.State != "GAME_OVER_PASSED" {
-		game.State = "GAME_OVER_FORFEIT"
-	}
-
-	game.Players[userID].SocketClient = nil
-	return true
+	rejoined := game.RejoinGame(userID, socketClient)
+	return rejoined
 }
 
-func (gameManager *GameManager) RejoinGame(gameID string, userID string, socketClient *SocketClient) bool {
-	game := gameManager.games[gameID]
-	// return false if no game or player is not part of game
+func (gameManager *GameManager) GetGameInfoLocal(gameID string, userID string) (GameInfoLocal, error) {
+	game := gameManager.localGames[gameID]
+	if game == nil || game.UserID != userID {
+		return GameInfoLocal{}, errors.New("Cannot get game info")
+	}
+
+	gameInfo := game.GetInfo()
+	return gameInfo, nil
+}
+
+func (gameManager *GameManager) GetGameInfoRemote(gameID string, userID string) (GameInfoRemote, error) {
+	game := gameManager.remoteGames[gameID]
 	if game == nil || game.Players[userID] == nil {
+		return GameInfoRemote{}, errors.New("Cannot get game info")
+	}
+
+	gameInfo, err := game.GetInfo(userID)
+	if err != nil {
+		return GameInfoRemote{}, err
+	}
+	return gameInfo, nil
+}
+
+func (gameManager *GameManager) PlaceStoneLocal(gameID string, userID string, coord Coord) bool {
+	game := gameManager.localGames[gameID]
+	if game == nil || game.UserID != userID {
 		return false
 	}
-	game.M.Lock()
-	defer game.M.Unlock()
-	game.Players[userID].SocketClient = socketClient
-	return true
+
+	placed := game.PlaceStone(coord)
+	return placed
 }
 
-func (gameManager *GameManager) GetGameInfo(gameID string, userID string) (GameInfo, error) {
-	game := gameManager.games[gameID]
-	// return false if no game or player is not part of game
-	if game == nil || game.Players[userID] == nil {
-		return GameInfo{}, errors.New("Cannot get game info")
-	}
-	return game.GetInfo(userID), nil
-}
-
-func (gameManager *GameManager) PlaceStone(gameID string, userID string, coord Coord) bool {
-	game := gameManager.games[gameID]
+func (gameManager *GameManager) PlaceStoneRemote(gameID string, userID string, coord Coord) bool {
+	game := gameManager.remoteGames[gameID]
 	if game == nil {
 		return false
 	}
@@ -141,21 +136,55 @@ func (gameManager *GameManager) PlaceStone(gameID string, userID string, coord C
 	return placed
 }
 
-func (gameManager *GameManager) Pass(gameID string, userID string) bool {
-	game := gameManager.games[gameID]
-	if game == nil {
+func (gameManager *GameManager) PassLocal(gameID string, userID string) bool {
+	game := gameManager.localGames[gameID]
+	if game == nil || game.UserID != userID {
 		return false
 	}
 
-	game.Pass(userID)
+	game.Pass()
 	return true
 }
 
-func (gameManager *GameManager) GetOtherPlayer(gameID string, userID string) (*Player, error) {
-	game := gameManager.games[gameID]
-	if game == nil {
-		return &Player{}, errors.New("No other player")
+func (gameManager *GameManager) PassRemote(gameID string, userID string) bool {
+	game := gameManager.remoteGames[gameID]
+	if game == nil || game.Players[userID] == nil {
+		return false
 	}
 
-	return game.GetOtherPlayer(userID)
+	game.Pass()
+	return true
+}
+
+func (gameManager *GameManager) JoinGameRemote(gameID string, userID string, socketClient *SocketClient) bool {
+	game := gameManager.remoteGames[gameID]
+
+	if game == nil {
+		return false
+	}
+	joined := game.JoinGame(userID, socketClient)
+	return joined
+}
+
+func (gameManager *GameManager) LeaveGameRemote(gameID string, userID string) bool {
+	game := gameManager.remoteGames[gameID]
+	if game == nil || game.Players[userID] == nil {
+		return false
+	}
+
+	left := game.LeaveGame(userID)
+	return left
+}
+
+func (gameManager *GameManager) GetOtherPlayerRemote(gameID string, userID string) (*Player, error) {
+	game := gameManager.remoteGames[gameID]
+	if game == nil || game.Players[userID] == nil {
+		return &Player{}, errors.New("Game not found")
+	}
+
+	otherPlayer, err := game.GetOtherPlayer(userID)
+	if err != nil {
+		return &Player{}, err
+	}
+	return otherPlayer, nil
 }

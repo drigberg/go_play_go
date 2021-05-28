@@ -2,7 +2,7 @@
 
 Everyone's favorite game (Go) implemented with everyone's favorite language (Go)!
 
-Play it live with a friend at: https://go-play-go.herokuapp.com/
+Play it alone or with a friend at: https://go-play-go.herokuapp.com/
 
 ## Design details
 

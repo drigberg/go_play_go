@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 import Board from './Board';
 import type {
   Coord,
-  GameInfo,
+  GameInfo$Remote,
   OutgoingMessage$LeaveGame$Remote,
   OutgoingMessage$Pass$Remote,
   OutgoingMessage$PlaceStone$Remote,
@@ -12,11 +12,11 @@ type Props = {
   socket: WebSocket;
   userId: string;
   gameId: string;
-  gameInfo: GameInfo | null;
+  gameInfo: GameInfo$Remote | null;
   getGameInfo: () => void;
 };
 
-function Game(props: Props): JSX.Element {
+function GameRemote(props: Props): JSX.Element {
   useEffect(() => {
     props.getGameInfo();
   }, []);
@@ -42,7 +42,13 @@ function Game(props: Props): JSX.Element {
         <h2>
           You are in game {props.gameId}! Tell a friend so that they can join!
         </h2>
-        <Board gameInfo={props.gameInfo} />
+        <Board
+          size={props.gameInfo.Size}
+          canPlaceStone={false}
+          spaces={props.gameInfo.Spaces}
+          availableSpaces={props.gameInfo.AvailableSpaces}
+          playerColor={props.gameInfo.PlayerColor}
+        />
         <button onClick={() => leaveGame()}>Leave Game</button>
       </div>
     );
@@ -73,6 +79,8 @@ function Game(props: Props): JSX.Element {
 
   const gameOver = props.gameInfo.State.startsWith('GAME_OVER');
 
+  const canPlaceStone =
+    props.gameInfo.PlayerTurn && props.gameInfo.State === 'PLAYING';
   return (
     <div>
       <div>
@@ -86,7 +94,7 @@ function Game(props: Props): JSX.Element {
               {props.gameInfo.ScoreData.Winner === props.gameInfo.PlayerColor
                 ? 'You won'
                 : 'Opponent won'}{' '}
-              by {props.gameInfo.ScoreData.PointDifference} points
+              by {props.gameInfo.ScoreData.PointDifference} points!
             </h3>
           </div>
         ) : (
@@ -99,7 +107,14 @@ function Game(props: Props): JSX.Element {
         {!gameOver && props.gameInfo.PlayerTurn && (
           <button onClick={() => pass()}>Pass</button>
         )}
-        <Board gameInfo={props.gameInfo} placeStone={placeStone} />
+        <Board
+          size={props.gameInfo.Size}
+          canPlaceStone={canPlaceStone}
+          placeStone={placeStone}
+          spaces={props.gameInfo.Spaces}
+          availableSpaces={props.gameInfo.AvailableSpaces}
+          playerColor={props.gameInfo.PlayerColor}
+        />
         <div>{`Game ID: ${props.gameId}`}</div>
         <button onClick={() => leaveGame()}>
           {gameOver ? 'Leave Game' : 'Forfeit Game'}
@@ -108,4 +123,4 @@ function Game(props: Props): JSX.Element {
     </div>
   );
 }
-export default Game;
+export default GameRemote;

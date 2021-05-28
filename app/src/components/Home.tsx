@@ -1,16 +1,21 @@
 import React, { useEffect, useState } from 'react';
 import Lobby from './Lobby';
-import Game from './Game';
+import GameLocal from './GameLocal';
+import GameRemote from './GameRemote';
 import { incomingMessageGuard } from './types';
 import { nanoid } from 'nanoid';
 import type {
-  GameInfo,
+  GameInfo$Local,
+  GameInfo$Remote,
+  OutgoingMessage$GetGameInfo$Local,
+  OutgoingMessage$RejoinGame$Local,
   OutgoingMessage$GetGameInfo$Remote,
   OutgoingMessage$RejoinGame$Remote,
 } from './types';
 
 const userIdKey = 'goPlayGo.userId';
-const gameIdKey = 'goPlayGo.gameIdKey';
+const gameIdKey = 'goPlayGo.gameId';
+const gameTypeKey = 'goPlayGo.gameType';
 
 function Home(): JSX.Element {
   const [backoffSeconds, setBackoffSeconds] = useState<number>(0);
@@ -19,7 +24,10 @@ function Home(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
-  const [gameInfo, setGameInfo] = useState<GameInfo | null>(null);
+  const [gameInfoRemote, setGameInfoRemote] =
+    useState<GameInfo$Remote | null>(null);
+  const [gameInfoLocal, setGameInfoLocal] =
+    useState<GameInfo$Local | null>(null);
   const [joinGameId, setJoinGameId] = useState<string | null>(null);
   const [socket, setSocket] = useState<WebSocket | null>(null);
 
@@ -41,7 +49,21 @@ function Home(): JSX.Element {
     }
   }
 
-  function rejoinGame() {
+  function rejoinGameLocal() {
+    if (userId === null || gameId === null || socket === null) {
+      return;
+    }
+    const message: OutgoingMessage$RejoinGame$Local = {
+      name: 'local/rejoinGame',
+      data: {
+        userID: userId,
+        gameID: gameId,
+      },
+    };
+    socket.send(JSON.stringify(message));
+  }
+
+  function rejoinGameRemote() {
     if (userId === null || gameId === null || socket === null) {
       return;
     }
@@ -55,10 +77,25 @@ function Home(): JSX.Element {
     socket.send(JSON.stringify(message));
   }
 
-  function getGameInfo() {
+  function getGameInfoRemote() {
     if (gameId && userId && socket) {
       const message: OutgoingMessage$GetGameInfo$Remote = {
         name: 'remote/getGameInfo',
+        data: {
+          userID: userId,
+          gameID: gameId,
+        },
+      };
+      socket.send(JSON.stringify(message));
+    } else {
+      setError("Can't get game info: try refreshing the page");
+    }
+  }
+
+  function getGameInfoLocal() {
+    if (gameId && userId && socket) {
+      const message: OutgoingMessage$GetGameInfo$Local = {
+        name: 'local/getGameInfo',
         data: {
           userID: userId,
           gameID: gameId,
@@ -96,7 +133,12 @@ function Home(): JSX.Element {
         setConnected(true);
         setError(null);
         // Ensure that the server is aware of the new socket connection: we might have refreshed
-        rejoinGame();
+        const gameType = localStorage.getItem(gameTypeKey);
+        if (gameType === 'LOCAL') {
+          rejoinGameLocal();
+        } else if (gameType === 'REMOTE') {
+          rejoinGameRemote();
+        }
       };
 
       socket.onclose = () => {
@@ -114,34 +156,65 @@ function Home(): JSX.Element {
 
       socket.onmessage = (event) => {
         const message = incomingMessageGuard(JSON.parse(event.data));
+        console.log(message);
         switch (message.name) {
+          case 'local/gameInfo':
+            setGameInfoLocal(message.data);
+            setError(null);
+            break;
+          case 'local/gameJoined':
+            localStorage.setItem(gameIdKey, message.data.GameID.toString());
+            localStorage.setItem(gameTypeKey, 'LOCAL');
+            setGameId(message.data.GameID);
+            setGameInfoRemote(null);
+            setError(null);
+            break;
+          case 'local/update':
+            getGameInfoLocal();
+            break;
           case 'remote/gameJoined':
             localStorage.setItem(gameIdKey, message.data.GameID.toString());
+            localStorage.setItem(gameTypeKey, 'REMOTE');
             setGameId(message.data.GameID);
+            setGameInfoLocal(null);
             setError(null);
             break;
           case 'remote/update':
-            getGameInfo();
+            getGameInfoRemote();
             break;
           case 'remote/gameInfo':
-            setGameInfo(message.data);
+            setGameInfoRemote(message.data);
             setError(null);
             break;
           case 'remote/gameLeft':
+            // For remote games, we don't leave until we're sure that the server is aware that we've left, so that
+            // the other player is made aware that the game is over.
             localStorage.removeItem(gameIdKey);
+            localStorage.removeItem(gameTypeKey);
             setGameId(null);
             setError(null);
+            setGameInfoRemote(null);
             break;
           case 'error':
             switch (message.data.Type) {
               case '400':
                 setError(message.data.Message);
                 break;
+              case 'local/rejoinGame':
+              case 'local/getGameInfo':
+                localStorage.removeItem(gameIdKey);
+                setGameId(null);
+                setGameInfoLocal(null);
+                setError(
+                  'Game not found! Either you submitted an invalid game ID, or the server restarted.',
+                );
+                break;
               case 'remote/rejoinGame':
               case 'remote/joinGame':
               case 'remote/getGameInfo':
                 localStorage.removeItem(gameIdKey);
                 setGameId(null);
+                setGameInfoRemote(null);
                 setError(
                   'Game not found! Either you submitted an invalid game ID, or the server restarted.',
                 );
@@ -188,21 +261,38 @@ function Home(): JSX.Element {
       )}
       {socket && connected && userId && (
         <div>
-          {gameId === null ? (
+          {gameId === null && (
             <Lobby
               userId={userId}
               socket={socket}
               joinGameId={joinGameId}
               setJoinGameId={setJoinGameId}
             />
-          ) : (
-            <Game
+          )}
+          {gameId !== null && gameInfoRemote && (
+            <GameRemote
               socket={socket}
               gameId={gameId}
               userId={userId}
-              gameInfo={gameInfo}
-              getGameInfo={() => getGameInfo()}
-            ></Game>
+              gameInfo={gameInfoRemote}
+              getGameInfo={() => getGameInfoRemote()}
+            />
+          )}
+          {gameId !== null && gameInfoLocal && (
+            <GameLocal
+              socket={socket}
+              gameId={gameId}
+              userId={userId}
+              gameInfo={gameInfoLocal}
+              getGameInfo={() => getGameInfoLocal()}
+              leaveGame={() => {
+                localStorage.removeItem(gameIdKey);
+                localStorage.removeItem(gameTypeKey);
+                setGameId(null);
+                setError(null);
+                setGameInfoLocal(null);
+              }}
+            />
           )}
         </div>
       )}

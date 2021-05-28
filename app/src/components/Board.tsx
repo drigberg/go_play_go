@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import type { Coord, GameInfo } from './types';
+import type { Coord, Spaces } from './types';
 
 function getHoshiPositions(size: number): Array<number> {
   switch (size) {
@@ -16,7 +16,11 @@ function getHoshiPositions(size: number): Array<number> {
 
 type Props = {
   placeStone?: (coord: Coord) => void;
-  gameInfo: GameInfo;
+  size: number;
+  playerColor: 'BLACK' | 'WHITE';
+  canPlaceStone: boolean;
+  spaces: Spaces;
+  availableSpaces: Array<Coord>;
 };
 
 function Board(props: Props): JSX.Element {
@@ -30,7 +34,7 @@ function Board(props: Props): JSX.Element {
   }, []);
 
   const width = windowWidth > 800 ? 800 : windowWidth - 60;
-  const size = props.gameInfo.Size;
+  const size = props.size;
   const rowWidth = width / (size + 1);
   const strokeWidth = width / 200 / (size / 9);
   const stoneRadius = width / 32 / (size / 9);
@@ -43,9 +47,7 @@ function Board(props: Props): JSX.Element {
     );
   }
 
-  const stoneColor = props.gameInfo.PlayerColor === 'BLACK' ? 'black' : 'white';
-  const canPlaceStone =
-    props.gameInfo.PlayerTurn && props.gameInfo.State === 'PLAYING';
+  const stoneColor = props.playerColor === 'BLACK' ? 'black' : 'white';
 
   return (
     <div style={{ margin: '20px' }}>
@@ -93,7 +95,7 @@ function Board(props: Props): JSX.Element {
               />
             )),
           )}
-          {props.gameInfo.Spaces.BLACK.map((coord) => (
+          {props.spaces.BLACK.map((coord) => (
             <circle
               key={`black-${coord.X}-${coord.Y}`}
               id={`black-${coord.X}-${coord.Y}`}
@@ -105,7 +107,7 @@ function Board(props: Props): JSX.Element {
               stroke="black"
             />
           ))}
-          {props.gameInfo.Spaces.WHITE.map((coord) => (
+          {props.spaces.WHITE.map((coord) => (
             <circle
               key={`white-${coord.X}-${coord.Y}`}
               id={`white-${coord.X}-${coord.Y}`}
@@ -117,7 +119,7 @@ function Board(props: Props): JSX.Element {
               stroke="black"
             />
           ))}
-          {props.gameInfo.AvailableSpaces.map((coord) => (
+          {props.availableSpaces.map((coord) => (
             <circle
               key={`available-${coord.X}-${coord.Y}`}
               id={`available-${coord.X}-${coord.Y}`}
@@ -128,12 +130,12 @@ function Board(props: Props): JSX.Element {
               stroke={isStoneToPlace(coord) ? '#00d619' : 'rgba(0, 0, 0, 0)'}
               fill={isStoneToPlace(coord) ? stoneColor : 'rgba(0, 0, 0, 0)'}
               onMouseEnter={() => {
-                if (canPlaceStone) {
+                if (props.canPlaceStone) {
                   setStoneToPlace(coord);
                 }
               }}
               onClick={() => {
-                if (canPlaceStone && props.placeStone) {
+                if (props.canPlaceStone && props.placeStone) {
                   props.placeStone(coord);
                 }
               }}

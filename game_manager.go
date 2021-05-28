@@ -39,7 +39,7 @@ var _ GameManagerInterface = (*GameManager)(nil)
 // NewServer creates a GameManager instance
 func NewGameManager() GameManager {
 	return GameManager{
-		localGames: make(map[string]*GameLocal),
+		localGames:  make(map[string]*GameLocal),
 		remoteGames: make(map[string]*GameRemote),
 	}
 }

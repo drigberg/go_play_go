@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import Board from './Board';
 import type {
   Coord,
@@ -16,10 +16,33 @@ type Props = {
   leaveGame: () => void;
 };
 
+const WAIT_SECONDS = 3;
+
 function GameLocal(props: Props): JSX.Element {
+  // If waiting for a server response, don't let player click
+  const [waiting, setWaiting] = useState<boolean>(false);
+
   useEffect(() => {
     props.getGameInfo();
   }, []);
+
+  // If gameInfo is updated, enable player to click again
+  useEffect(() => {
+    setWaiting(false);
+  }, [props.gameInfo]);
+
+  // Wait for up to 3 seconds after placing stones
+  useEffect(() => {
+    if (waiting) {
+      const timeoutId = setTimeout(() => {
+        setWaiting(false);
+      }, WAIT_SECONDS * 1000);
+      return () => {
+        // clear timeout if `waiting` is updated somewhere else
+        clearTimeout(timeoutId);
+      };
+    }
+  }, [waiting]);
 
   if (props.gameInfo === null) {
     return <div>Loading...</div>;
@@ -35,6 +58,7 @@ function GameLocal(props: Props): JSX.Element {
       },
     };
     props.socket.send(JSON.stringify(message));
+    setWaiting(true);
   }
 
   function pass() {
@@ -45,6 +69,7 @@ function GameLocal(props: Props): JSX.Element {
         gameID: props.gameId,
       },
     };
+    setWaiting(true);
     props.socket.send(JSON.stringify(message));
   }
 
@@ -73,7 +98,7 @@ function GameLocal(props: Props): JSX.Element {
         {!gameOver && <button onClick={() => pass()}>Pass</button>}
         <Board
           size={props.gameInfo.Size}
-          canPlaceStone={props.gameInfo.State === 'PLAYING'}
+          canPlaceStone={props.gameInfo.State === 'PLAYING' && !waiting}
           placeStone={placeStone}
           spaces={props.gameInfo.Spaces}
           availableSpaces={props.gameInfo.AvailableSpaces}

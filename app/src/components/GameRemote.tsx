@@ -16,6 +16,11 @@ type Props = {
   getGameInfo: () => void;
 };
 
+/**
+ * We don't include any "waiting" logic like with GameLocal, because each client is for exactly one player.
+ * If a player clicks twice, one click will just result in an error. Likewise, if a player hovers quickly
+ * after placing, there won't be any bugs related to stone color.
+ */
 function GameRemote(props: Props): JSX.Element {
   useEffect(() => {
     props.getGameInfo();
@@ -104,9 +109,12 @@ function GameRemote(props: Props): JSX.Element {
               : 'Waiting for opponent to play...'}
           </p>
         )}
-        {!gameOver && props.gameInfo.PlayerTurn && (
-          <button onClick={() => pass()}>Pass</button>
-        )}
+        <button
+          onClick={() => pass()}
+          disabled={gameOver || !props.gameInfo.PlayerTurn}
+        >
+          Pass
+        </button>
         <Board
           size={props.gameInfo.Size}
           canPlaceStone={canPlaceStone}

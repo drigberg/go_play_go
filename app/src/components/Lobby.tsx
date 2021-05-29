@@ -67,7 +67,7 @@ function Lobby(props: Props): JSX.Element {
 
   return (
     <div>
-      <h2>Create or join a game!</h2>
+      <h2>Create a game...</h2>
       <div style={{ margin: '5px' }}>
         <button
           style={getSizeButtonStyle(9)}
@@ -88,18 +88,19 @@ function Lobby(props: Props): JSX.Element {
           19x19
         </button>
       </div>
-      <div style={{ margin: '5px' }}>
-        <button disabled={createGameSize === null} onClick={createRemoteGame}>
-          Create Online Game
-        </button>
+      <div style={{ marginTop: '15px' }}>
         <button disabled={createGameSize === null} onClick={createLocalGame}>
           Create Local Game
         </button>
+        <button disabled={createGameSize === null} onClick={createRemoteGame}>
+          Create Online Game
+        </button>
       </div>
+      <h2>...or join using a game id sent by a friend</h2>
       <div style={{ margin: '5px' }}>
         <input
           type="text"
-          placeholder="gameId"
+          placeholder="game id"
           onChange={(e) => props.setJoinGameId(e.target.value)}
         />
         <button onClick={joinGame} disabled={props.joinGameId === null}>

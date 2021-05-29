@@ -215,19 +215,17 @@ function Home(): JSX.Element {
                 localStorage.removeItem(gameIdKey);
                 setGameId(null);
                 setGameInfoLocal(null);
-                setError(
-                  'Game not found! Either you submitted an invalid game ID, or the server restarted.',
-                );
+                setError('Game not found! The server must have restarted.');
+                break;
+              case 'remote/joinGame':
+                setError('Game not found! Please check the game id.');
                 break;
               case 'remote/rejoinGame':
-              case 'remote/joinGame':
               case 'remote/getGameInfo':
                 localStorage.removeItem(gameIdKey);
                 setGameId(null);
                 setGameInfoRemote(null);
-                setError(
-                  'Game not found! Either you submitted an invalid game ID, or the server restarted.',
-                );
+                setError('Game not found! The server must have restarted.');
                 break;
               default:
                 throw new Error('Error type not recognized');

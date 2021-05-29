@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import Lobby from './Lobby';
 import GameLocal from './GameLocal';
 import GameRemote from './GameRemote';
+import LoadingBox from './LoadingBox';
 import { incomingMessageGuard } from './types';
 import { nanoid } from 'nanoid';
 import type {
@@ -20,7 +21,6 @@ const gameTypeKey = 'goPlayGo.gameType';
 function Home(): JSX.Element {
   const [backoffSeconds, setBackoffSeconds] = useState<number>(0);
   const [connected, setConnected] = useState<boolean>(false);
-  const [connectionCounter, setConnectionCounter] = useState<number>(0);
   const [error, setError] = useState<string | null>(null);
   const [userId, setUserId] = useState<string | null>(null);
   const [gameId, setGameId] = useState<string | null>(null);
@@ -238,33 +238,14 @@ function Home(): JSX.Element {
     }
   }, [socket, gameId, userId, backoffSeconds]);
 
-  useEffect(() => {
-    if (!connected) {
-      const intervalId = setInterval(() => {
-        setConnectionCounter(connectionCounter + 1);
-      }, 500);
-
-      return () => {
-        clearInterval(intervalId);
-      };
-    }
-  }, [connected, connectionCounter]);
-
-  function getConnectingDots() {
-    let dots = '';
-    for (let i = 0; i < (connectionCounter % 3) + 1; i++) {
-      dots += '.';
-    }
-    return dots;
-  }
-
   return (
     <div style={{ textAlign: 'center' }}>
       <h1>GoPlayGo!</h1>
       {error && <h3 style={{ color: 'red' }}>Error: {error}</h3>}
       {!connected && (
         <div>
-          <p>Connecting{getConnectingDots()}</p>
+          <h2>Connecting...</h2>
+          <LoadingBox />
         </div>
       )}
       {socket && connected && userId && (

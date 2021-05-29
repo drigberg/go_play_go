@@ -95,6 +95,9 @@ func (gameRemote *GameRemote) GetOtherPlayer(userID string) (*Player, error) {
 }
 
 func (gameRemote *GameRemote) PlaceStone(userID string, coord Coord) bool {
+	if !gameRemote.IsTurn(userID) {
+		return false
+	}
 	color := gameRemote.GetPlayerColor(userID)
 	placed := gameRemote.Game.PlaceStone(color, coord)
 	return placed

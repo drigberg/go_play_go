@@ -71,7 +71,7 @@ function Board(): JSX.Element {
       } else {
         setStepNumber(0);
       }
-    }, 200);
+    }, 100);
     return () => {
       clearInterval(intervalId);
     };

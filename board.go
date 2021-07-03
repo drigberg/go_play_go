@@ -1,9 +1,5 @@
 package main
 
-import (
-	"errors"
-)
-
 const (
 	FREE  = "FREE"
 	WHITE = "WHITE"
@@ -55,7 +51,7 @@ type BoardInterface interface {
 	GetSpaces() [][]string
 	GetScoreData() ScoreData
 	GetAvailableSpaces(color string) []Coord
-	GetLastPlacement() (StonePlacement, error)
+	GetLastPlacement() StonePlacement
 	ListSpacesForColor(spaces [][]string, color string) []Coord
 }
 
@@ -128,11 +124,12 @@ func (board *Board) GetSpaces() [][]string {
 	return spaces
 }
 
-func (board *Board) GetLastPlacement() (StonePlacement, error) {
-	if len(board.Mutations) > 0 {
-		return board.Mutations[len(board.Mutations) - 1].Add, nil
+func (board *Board) GetLastPlacement() StonePlacement {
+	if len(board.Mutations) == 0 {
+			// use dummy coord and color if turn 0
+		return StonePlacement{Coord: Coord{X: -1, Y: -1}, Color: FREE}
 	}
-	return StonePlacement{}, errors.New("Cannot get last placement before first move")
+	return board.Mutations[len(board.Mutations) - 1].Add
 }
 
 // returns the value of a space

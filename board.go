@@ -48,6 +48,7 @@ func coordIsInList(coord Coord, coords []Coord) bool {
 // BoardInterface defines methods a Board should implement
 type BoardInterface interface {
 	PlaceStone(coord Coord, color string) bool
+	GetSpaces() [][]string
 	GetScoreData() ScoreData
 	GetAvailableSpaces(color string) []Coord
 	ListSpacesForColor(spaces [][]string, color string) []Coord
@@ -83,7 +84,18 @@ func (board *Board) getEmptySpaces() [][]string {
 	return spaces
 }
 
-// Add and remove stones for turn
+func (board *Board) spacesAreEqual(spaces1 [][]string, spaces2 [][]string) bool {
+	for x := 0; x < board.Size; x++ {
+		for y := 0; y < board.Size; y++ {
+			if spaces1[x][y] != spaces2[x][y] {
+				return false
+			}
+		}
+	}
+	return true
+}
+
+// add and remove stones for turn
 func (board *Board) applyMutation(spaces [][]string, mutation Mutation) {
 	spaces[mutation.Add.Coord.X][mutation.Add.Coord.Y] = mutation.Add.Color
 	for _, toRemove := range mutation.Remove {
@@ -91,6 +103,18 @@ func (board *Board) applyMutation(spaces [][]string, mutation Mutation) {
 	}
 }
 
+// Get state of board from previous turn
+func (board *Board) getPreviousSpaces() [][]string {
+	spaces := board.getEmptySpaces()
+	for turn, mutation := range board.Mutations {
+		if turn < len(board.Mutations) - 1 {
+			board.applyMutation(spaces, mutation)
+		}
+	}
+	return spaces
+}
+
+// get state of stones on board
 func (board *Board) GetSpaces() [][]string {
 	spaces := board.getEmptySpaces()
 	for _, mutation := range board.Mutations {
@@ -157,7 +181,20 @@ func (board *Board) GetAvailableSpaces(color string) []Coord {
 					// if no liberties, assert that we are capturing stones
 					stonesToCapture := board.getStonesToCapture(coord, color)
 					if len(stonesToCapture) > 0 {
-						isAvailable = true
+						// ko rule: when capturing, new state cannot equal state from last turn
+						previousSpaces := board.getPreviousSpaces()
+						spaces := board.GetSpaces()
+						mutation := Mutation{
+							Add: StonePlacement{
+								Coord: coord,
+								Color: color,
+							},
+							Remove: stonesToCapture,
+						}
+						board.applyMutation(spaces, mutation)
+						if !board.spacesAreEqual(spaces, previousSpaces) {
+							isAvailable = true
+						}
 					} else {
 						// if no liberties and not capturing, assert that connected stones will have at
 						// least one remaining liberty

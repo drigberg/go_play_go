@@ -45,6 +45,49 @@ func TestBoardPlaceStone(t *testing.T) {
 	}
 }
 
+func TestSpacesAreEqual(t *testing.T) {
+	board := NewBoard(9)
+
+	if !board.spacesAreEqual(board.getEmptySpaces(), board.getEmptySpaces()) {
+		t.Errorf("Empty spaces should be equal")
+	}
+
+	board.PlaceStone(Coord{X: 0, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 1, Y: 0}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+
+	spaces := board.GetSpaces()
+	if !board.spacesAreEqual(board.GetSpaces(), board.GetSpaces()) {
+		t.Errorf("board.spaceAreEqual returned false for equal boards")
+	}
+
+	board.PlaceStone(Coord{X: 3, Y: 0}, BLACK)
+
+	if board.spacesAreEqual(spaces, board.GetSpaces()) {
+		t.Errorf("Spaces should be equal after placing another stone")
+	}
+}
+
+
+func TestGetPreviousSpaces(t *testing.T) {
+	board := NewBoard(9)
+
+	if !board.spacesAreEqual(board.GetSpaces(), board.getPreviousSpaces()) {
+		t.Errorf("Previous spaces should be empty")
+	}
+
+	board.PlaceStone(Coord{X: 0, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 1, Y: 0}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+
+	prevSpaces := board.GetSpaces()
+	board.PlaceStone(Coord{X: 3, Y: 0}, WHITE)
+
+	if !board.spacesAreEqual(prevSpaces, board.getPreviousSpaces()) {
+		t.Errorf("board.getPreviousSpaces() did not match previous spaces")
+	}
+}
+
 func TestBoardPlaceStoneInEyes(t *testing.T) {
 	board := NewBoard(9)
 
@@ -222,6 +265,44 @@ func TestBoardCaptureSingleCorner(t *testing.T) {
 
 	if len(blackSpaces) != 2 {
 		t.Errorf("Expected 2 black spaces, got %d", len(blackSpaces))
+	}
+}
+
+func TestBoardKoRule(t *testing.T) {
+	board := NewBoard(9)
+
+	// set up ko
+	board.PlaceStone(Coord{X: 0, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 2, Y: 1}, WHITE)
+	board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	board.PlaceStone(Coord{X: 3, Y: 0}, WHITE)
+	board.PlaceStone(Coord{X: 1, Y: 1}, BLACK)
+
+	// capture
+	board.PlaceStone(Coord{X: 1, Y: 0}, WHITE)
+
+	// assert state
+	spaces := board.GetSpaces()
+	whiteSpaces := board.ListSpacesForColor(spaces, WHITE)
+	blackSpaces := board.ListSpacesForColor(spaces, BLACK)
+
+	if len(whiteSpaces) != 3 {
+		t.Errorf("Expected 3 white spaces, got %d", len(whiteSpaces))
+	}
+
+	if len(blackSpaces) != 2 {
+		t.Errorf("Expected 2 black spaces, got %d", len(blackSpaces))
+	}
+
+	// attempt to break ko rule by capturing stone back
+	placed := board.PlaceStone(Coord{X: 2, Y: 0}, BLACK)
+	if placed {
+		t.Errorf("Ko rule violated: placed stone which repeats board state")
+	}
+
+	// assert that attempted mutation was not saved
+	if len(board.Mutations) != 6 {
+		t.Errorf("Expected 6 mutations to have been saved, got %d", len(board.Mutations))
 	}
 }
 

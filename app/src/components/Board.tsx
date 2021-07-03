@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useState } from 'react';
 import type { Coord, Spaces } from './types';
 
 function getHoshiPositions(size: number): Array<number> {
@@ -21,13 +21,24 @@ type Props = {
   canPlaceStone: boolean;
   spaces: Spaces;
   availableSpaces: Array<Coord>;
+  lastCoord: Coord;
 };
 
 function Board(props: Props): JSX.Element {
   const [stoneToPlace, setStoneToPlace] = useState<Coord | null>(null);
   const [windowWidth, setWindowWidth] = useState<number>(window.innerWidth);
+  const [strokeDashoffset, setStrokeDashOffset] = useState<number>(0);
+  const [readyToPlace, setReadyToPlace] = useState<boolean>(false);
 
   useEffect(() => {
+    const intervalId = setInterval(() => {
+      const step = readyToPlace ? -0.6 : 0.1;
+      setStrokeDashOffset(strokeDashoffset + step);
+    }, 10);
+    return () => clearInterval(intervalId);
+  }, [strokeDashoffset]);
+
+  useLayoutEffect(() => {
     window.addEventListener('resize', () => {
       setWindowWidth(window.innerWidth);
     });
@@ -40,11 +51,16 @@ function Board(props: Props): JSX.Element {
   const stoneRadius = width / 32 / (size / 9);
   const hoshiRadius = width / 80 / (size / 9);
   const hoshiPositions = getHoshiPositions(size);
+  const dashArraySize = width / 80 / (size / 9);
 
   function isStoneToPlace(coord: Coord): boolean {
     return Boolean(
       stoneToPlace && stoneToPlace.X === coord.X && stoneToPlace.Y === coord.Y,
     );
+  }
+
+  function isLastCoord(coord: Coord): boolean {
+    return props.lastCoord.X === coord.X && props.lastCoord.Y === coord.Y;
   }
 
   const stoneColor = props.playerColor === 'BLACK' ? 'black' : 'white';
@@ -104,7 +120,7 @@ function Board(props: Props): JSX.Element {
               r={stoneRadius}
               fill="black"
               strokeWidth={strokeWidth}
-              stroke="black"
+              stroke={isLastCoord(coord) ? '#00d619' : 'black'}
             />
           ))}
           {props.spaces.WHITE.map((coord) => (
@@ -116,7 +132,7 @@ function Board(props: Props): JSX.Element {
               r={stoneRadius}
               fill="white"
               strokeWidth={strokeWidth}
-              stroke="black"
+              stroke={isLastCoord(coord) ? '#00d619' : 'black'}
             />
           ))}
           {props.availableSpaces.map((coord) => (
@@ -127,16 +143,23 @@ function Board(props: Props): JSX.Element {
               cy={rowWidth * (coord.Y + 1)}
               r={isStoneToPlace(coord) ? stoneRadius : stoneRadius * 1.5}
               strokeWidth={strokeWidth}
+              strokeDasharray={dashArraySize}
+              strokeDashoffset={strokeDashoffset}
               stroke={isStoneToPlace(coord) ? '#00d619' : 'rgba(0, 0, 0, 0)'}
               fill={isStoneToPlace(coord) ? stoneColor : 'rgba(0, 0, 0, 0)'}
               onMouseEnter={() => {
                 if (props.canPlaceStone) {
                   setStoneToPlace(coord);
+                  setReadyToPlace(false);
                 }
               }}
               onClick={() => {
                 if (props.canPlaceStone && props.placeStone) {
-                  props.placeStone(coord);
+                  if (readyToPlace) {
+                    props.placeStone(coord);
+                  } else {
+                    setReadyToPlace(true);
+                  }
                 }
               }}
             />

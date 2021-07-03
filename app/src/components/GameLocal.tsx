@@ -103,6 +103,7 @@ function GameLocal(props: Props): JSX.Element {
           spaces={props.gameInfo.Spaces}
           availableSpaces={props.gameInfo.AvailableSpaces}
           playerColor={props.gameInfo.CurrentTurnColor}
+          lastCoord={props.gameInfo.LastCoord}
         />
         <button onClick={() => props.leaveGame()}>Quit Game</button>
       </div>

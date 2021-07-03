@@ -53,6 +53,7 @@ function GameRemote(props: Props): JSX.Element {
           spaces={props.gameInfo.Spaces}
           availableSpaces={props.gameInfo.AvailableSpaces}
           playerColor={props.gameInfo.PlayerColor}
+          lastCoord={props.gameInfo.LastCoord}
         />
         <button onClick={() => leaveGame()}>Leave Game</button>
       </div>
@@ -122,6 +123,7 @@ function GameRemote(props: Props): JSX.Element {
           spaces={props.gameInfo.Spaces}
           availableSpaces={props.gameInfo.AvailableSpaces}
           playerColor={props.gameInfo.PlayerColor}
+          lastCoord={props.gameInfo.LastCoord}
         />
         <div>{`Game ID: ${props.gameId}`}</div>
         <button onClick={() => leaveGame()}>

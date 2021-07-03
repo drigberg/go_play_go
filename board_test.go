@@ -45,6 +45,26 @@ func TestBoardPlaceStone(t *testing.T) {
 	}
 }
 
+func TestBoardGetLastPlacement(t *testing.T) {
+	board := NewBoard(9)
+
+	lastPlacement, err := board.GetLastPlacement()
+	if err == nil {
+		t.Errorf("Should get an error when trying to get last placement before turn 1")
+	}
+
+	board.PlaceStone(Coord{X: 7, Y: 6}, BLACK)
+
+	lastPlacement, err = board.GetLastPlacement()
+	if err != nil {
+		t.Errorf("Should be able to get last placement on turn 1")
+	}
+
+	if lastPlacement.Coord.X != 7 || lastPlacement.Coord.Y != 6 {
+		t.Errorf("Last placement should have been at {7,6}, got {%d,%d}", lastPlacement.Coord.X, lastPlacement.Coord.Y)
+	}
+}
+
 func TestSpacesAreEqual(t *testing.T) {
 	board := NewBoard(9)
 

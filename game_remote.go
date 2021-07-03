@@ -168,9 +168,9 @@ func (gameRemote *GameRemote) GetInfo(userID string) (GameInfoRemote, error) {
 	}
 
 	color := gameRemote.GetPlayerColor(userID)
-	Spaces := Spaces{
-		BLACK: gameRemote.Game.Board.ListSpacesForColor(gameRemote.Game.Board.Spaces, BLACK),
-		WHITE: gameRemote.Game.Board.ListSpacesForColor(gameRemote.Game.Board.Spaces, WHITE),
+	spaces := Spaces{
+		BLACK: gameRemote.Game.Board.ListSpacesForColor(gameRemote.Game.Board.GetSpaces(), BLACK),
+		WHITE: gameRemote.Game.Board.ListSpacesForColor(gameRemote.Game.Board.GetSpaces(), WHITE),
 	}
 	opponentId := "NONE"
 	for _, player := range gameRemote.Players {
@@ -189,7 +189,7 @@ func (gameRemote *GameRemote) GetInfo(userID string) (GameInfoRemote, error) {
 		State:           gameRemote.State,
 		ScoreData:       gameRemote.Game.Board.GetScoreData(),
 		AvailableSpaces: gameRemote.Game.Board.GetAvailableSpaces(color),
-		Spaces:          Spaces,
+		Spaces:          spaces,
 		Turn:            gameRemote.Game.Turn,
 	}, nil
 }

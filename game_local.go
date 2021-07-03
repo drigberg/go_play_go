@@ -96,9 +96,9 @@ func (gameLocal *GameLocal) Pass() {
 // Returns all the information that the client needs for the game state
 func (gameLocal *GameLocal) GetInfo() GameInfoLocal {
 	color := gameLocal.CurrentTurnColor()
-	Spaces := Spaces{
-		BLACK: gameLocal.Game.Board.ListSpacesForColor(gameLocal.Game.Board.Spaces, BLACK),
-		WHITE: gameLocal.Game.Board.ListSpacesForColor(gameLocal.Game.Board.Spaces, WHITE),
+	spaces := Spaces{
+		BLACK: gameLocal.Game.Board.ListSpacesForColor(gameLocal.Game.Board.GetSpaces(), BLACK),
+		WHITE: gameLocal.Game.Board.ListSpacesForColor(gameLocal.Game.Board.GetSpaces(), WHITE),
 	}
 
 	return GameInfoLocal{
@@ -107,7 +107,7 @@ func (gameLocal *GameLocal) GetInfo() GameInfoLocal {
 		State:            gameLocal.State,
 		ScoreData:        gameLocal.Game.Board.GetScoreData(),
 		AvailableSpaces:  gameLocal.Game.Board.GetAvailableSpaces(color),
-		Spaces:           Spaces,
+		Spaces:           spaces,
 		Turn:             gameLocal.Game.Turn,
 	}
 }

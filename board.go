@@ -16,10 +16,20 @@ type Coord struct {
 	Y int
 }
 
+type StonePlacement struct {
+	Color string
+	Coord Coord
+}
+
+type Mutation struct {
+	Add StonePlacement
+	Remove []Coord
+}
+
 // Board contains the state of the game board
 type Board struct {
 	Size   int
-	Spaces [][]string
+	Mutations []Mutation
 }
 
 func coordsAreEqual(c1 Coord, c2 Coord) bool {
@@ -58,13 +68,41 @@ func NewBoard(size int) Board {
 
 	return Board{
 		Size:   size,
-		Spaces: spaces,
+		Mutations: []Mutation{},
 	}
+}
+
+func (board *Board) getEmptySpaces() [][]string {
+	spaces := make([][]string, board.Size)
+	for x := 0; x < board.Size; x++ {
+		spaces[x] = make([]string, board.Size)
+		for y := 0; y < board.Size; y++ {
+			spaces[x][y] = FREE
+		}
+	}
+	return spaces
+}
+
+// Add and remove stones for turn
+func (board *Board) applyMutation(spaces [][]string, mutation Mutation) {
+	spaces[mutation.Add.Coord.X][mutation.Add.Coord.Y] = mutation.Add.Color
+	for _, toRemove := range mutation.Remove {
+		spaces[toRemove.X][toRemove.Y] = FREE
+	}
+}
+
+func (board *Board) GetSpaces() [][]string {
+	spaces := board.getEmptySpaces()
+	for _, mutation := range board.Mutations {
+		board.applyMutation(spaces, mutation)
+	}
+	return spaces
 }
 
 // returns the value of a space
 func (board *Board) getSpaceOwnership(coord Coord) string {
-	return board.Spaces[coord.X][coord.Y]
+	spaces := board.GetSpaces()
+	return spaces[coord.X][coord.Y]
 }
 
 // determines which stones will be captured by a move
@@ -157,22 +195,16 @@ func (board *Board) PlaceStone(coord Coord, color string) bool {
 		return false
 	}
 
-	board.Spaces[coord.X][coord.Y] = color
-
 	stonesToCapture := board.getStonesToCapture(coord, color)
-	for _, toCapture := range stonesToCapture {
-		board.removeStone(toCapture)
+	mutation := Mutation{
+		Add: StonePlacement{
+			Coord: coord,
+			Color: color,
+		},
+		Remove: stonesToCapture,
 	}
-	return true
-}
+	board.Mutations = append(board.Mutations, mutation)
 
-// Removes a stone from the board
-func (board *Board) removeStone(coord Coord) bool {
-	if board.getSpaceOwnership(coord) == FREE {
-		return false
-	}
-
-	board.Spaces[coord.X][coord.Y] = FREE
 	return true
 }
 
@@ -276,7 +308,7 @@ func (board *Board) getAllConnectedStones(coord Coord, color string, connected [
 
 // Groups free spaces into chains
 func (board *Board) getGroupedFreeSpaces() [][]Coord {
-	coords := board.ListSpacesForColor(board.Spaces, FREE)
+	coords := board.ListSpacesForColor(board.GetSpaces(), FREE)
 	grouped := []Coord{}
 	groups := [][]Coord{}
 
@@ -395,11 +427,12 @@ func (board *Board) countStones(komi []Coord) StoneCounts {
 	numBlackStones := 0
 	numWhiteStones := len(komi)
 
-	for x := range board.Spaces {
-		for y := range board.Spaces[x] {
-			if board.Spaces[x][y] == BLACK {
+	spaces := board.GetSpaces()
+	for x := range spaces {
+		for y := range spaces[x] {
+			if spaces[x][y] == BLACK {
 				numBlackStones++
-			} else if board.Spaces[x][y] == WHITE {
+			} else if spaces[x][y] == WHITE {
 				numWhiteStones++
 			}
 		}
@@ -411,16 +444,6 @@ func (board *Board) countStones(komi []Coord) StoneCounts {
 	}
 }
 
-// Returns a copy of board.Spaces so that we can safely add stones for point-counting
-func (board *Board) copySpaces() [][]string {
-	spacesCopy := make([][]string, board.Size)
-	for x := 0; x < board.Size; x++ {
-		spacesCopy[x] = make([]string, board.Size)
-		copy(spacesCopy[x], board.Spaces[x])
-	}
-	return spacesCopy
-}
-
 // Adds all remaining stones to the board for point-counting
 func (board *Board) fillBoard(territories Territories, komi []Coord) ([][]string, StoneCounts) {
 	totalsStonesPerPlayer := (board.Size*board.Size - 1) / 2
@@ -429,16 +452,16 @@ func (board *Board) fillBoard(territories Territories, komi []Coord) ([][]string
 		BLACK: totalsStonesPerPlayer - stoneCounts.BLACK,
 		WHITE: totalsStonesPerPlayer - stoneCounts.WHITE,
 	}
-	spacesCopy := board.copySpaces()
+	spaces := board.GetSpaces()
 
 	for _, c := range komi {
-		spacesCopy[c.X][c.Y] = WHITE
+		spaces[c.X][c.Y] = WHITE
 	}
 
 	for _, group := range territories.BLACK {
 		for _, c := range group {
 			if remaining.BLACK > 0 {
-				spacesCopy[c.X][c.Y] = BLACK
+				spaces[c.X][c.Y] = BLACK
 				remaining.BLACK--
 			}
 		}
@@ -447,13 +470,13 @@ func (board *Board) fillBoard(territories Territories, komi []Coord) ([][]string
 	for _, group := range territories.WHITE {
 		for _, c := range group {
 			if remaining.WHITE > 0 {
-				spacesCopy[c.X][c.Y] = WHITE
+				spaces[c.X][c.Y] = WHITE
 				remaining.WHITE--
 			}
 		}
 	}
 
-	return spacesCopy, remaining
+	return spaces, remaining
 }
 
 type ScoreData struct {

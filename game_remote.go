@@ -25,7 +25,7 @@ type GameRemote struct {
 	State         string
 }
 
-// GameRemoteInterface defines methods a GameRemote should implement
+// GameRemoteInterface defines methods a GameRemote must implement
 type GameRemoteInterface interface {
 	JoinGame(userID string, socketClient *SocketClient) bool
 	RejoinGame(userID string, socketClient *SocketClient) bool

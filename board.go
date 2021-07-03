@@ -45,7 +45,7 @@ func coordIsInList(coord Coord, coords []Coord) bool {
 	return false
 }
 
-// BoardInterface defines methods a Board should implement
+// BoardInterface defines methods a Board must implement
 type BoardInterface interface {
 	PlaceStone(coord Coord, color string) bool
 	GetSpaces() [][]string

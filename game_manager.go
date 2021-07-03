@@ -15,7 +15,7 @@ type GameManager struct {
 
 const idChars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ123456789"
 
-// GameManagerInterface defines methods a Game should implement
+// GameManagerInterface defines methods a Game must implement
 type GameManagerInterface interface {
 	CreateGameLocal(userID string, size int, socketClient *SocketClient) string
 	CreateGameRemote(userID string, size int, socketClient *SocketClient) string

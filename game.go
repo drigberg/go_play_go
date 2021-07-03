@@ -16,7 +16,7 @@ type Spaces struct {
 	WHITE []Coord
 }
 
-// GameInterface defines methods a Game should implement
+// GameInterface defines methods a Game must implement
 type GameInterface interface {
 	Pass() bool
 	PlaceStone(color string, coord Coord) bool

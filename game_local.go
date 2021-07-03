@@ -17,7 +17,7 @@ type GameLocal struct {
 	State        string
 }
 
-// GameLocalInterface defines methods a GameLocal should implement
+// GameLocalInterface defines methods a GameLocal must implement
 type GameLocalInterface interface {
 	RejoinGame(userID string, socketClient *SocketClient) bool
 	GetInfo() GameInfoLocal

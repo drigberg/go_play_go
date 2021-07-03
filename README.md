@@ -34,5 +34,4 @@ Play it alone or with a friend at: https://go-play-go.herokuapp.com/
 - Chat
 - Tutorial
 - CPU mode
-- Local multiplayer
 - Test coverage for game.go and game_manager.go

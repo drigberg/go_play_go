@@ -51,7 +51,7 @@ type BoardInterface interface {
 	GetSpaces() [][]string
 	GetScoreData() ScoreData
 	GetAvailableSpaces(color string) []Coord
-	GetLastPlacement() StonePlacement
+	GetLastCoord() Coord
 	ListSpacesForColor(spaces [][]string, color string) []Coord
 }
 
@@ -124,12 +124,12 @@ func (board *Board) GetSpaces() [][]string {
 	return spaces
 }
 
-func (board *Board) GetLastPlacement() StonePlacement {
+func (board *Board) GetLastCoord() Coord {
 	if len(board.Mutations) == 0 {
 			// use dummy coord and color if turn 0
-		return StonePlacement{Coord: Coord{X: -1, Y: -1}, Color: FREE}
+		return Coord{X: -1, Y: -1}
 	}
-	return board.Mutations[len(board.Mutations) - 1].Add
+	return board.Mutations[len(board.Mutations) - 1].Add.Coord
 }
 
 // returns the value of a space

@@ -45,20 +45,20 @@ func TestBoardPlaceStone(t *testing.T) {
 	}
 }
 
-func TestBoardGetLastPlacement(t *testing.T) {
+func TestBoardGetLastCoord(t *testing.T) {
 	board := NewBoard(9)
 
-	lastPlacement := board.GetLastPlacement()
-	if lastPlacement.Coord.X != -1 || lastPlacement.Coord.Y != -1 {
-		t.Errorf("Last placement should be dummy position on turn 0 ({-1,-1}), got {%d,%d}", lastPlacement.Coord.X, lastPlacement.Coord.Y)
+	lastCoord := board.GetLastCoord()
+	if lastCoord.X != -1 || lastCoord.Y != -1 {
+		t.Errorf("Last placement should be dummy position on turn 0 ({-1,-1}), got {%d,%d}", lastCoord.X, lastCoord.Y)
 	}
 
 	board.PlaceStone(Coord{X: 7, Y: 6}, BLACK)
 
-	lastPlacement = board.GetLastPlacement()
+	lastCoord = board.GetLastCoord()
 
-	if lastPlacement.Coord.X != 7 || lastPlacement.Coord.Y != 6 {
-		t.Errorf("Last placement should have been at {7,6}, got {%d,%d}", lastPlacement.Coord.X, lastPlacement.Coord.Y)
+	if lastCoord.X != 7 || lastCoord.Y != 6 {
+		t.Errorf("Last placement should have been at {7,6}, got {%d,%d}", lastCoord.X, lastCoord.Y)
 	}
 }
 

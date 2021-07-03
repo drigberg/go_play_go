@@ -69,6 +69,7 @@ type GameInfoRemote struct {
 	OpponentID      string
 	AvailableSpaces []Coord
 	Spaces          Spaces
+	LastCoord       Coord
 }
 
 func (gameRemote *GameRemote) IsTurn(userID string) bool {
@@ -191,5 +192,6 @@ func (gameRemote *GameRemote) GetInfo(userID string) (GameInfoRemote, error) {
 		AvailableSpaces: gameRemote.Game.Board.GetAvailableSpaces(color),
 		Spaces:          spaces,
 		Turn:            gameRemote.Game.Turn,
+		LastCoord:       gameRemote.Game.Board.GetLastCoord(),
 	}, nil
 }

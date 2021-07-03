@@ -91,6 +91,7 @@ export type GameInfo$Local = {
   CurrentTurnColor: Color;
   AvailableSpaces: Array<Coord>;
   Spaces: Spaces;
+  LastCoord: Coord;
 };
 
 type IncomingMessage$Local$GameInfo = {
@@ -111,6 +112,7 @@ const incomingMessage$GameInfo$LocalDecoder = exact({
     CurrentTurnColor: colorDecoder,
     AvailableSpaces: array(coordDecoder),
     Spaces: spacesDecoder,
+    LastCoord: coordDecoder,
   }),
 });
 
@@ -128,6 +130,7 @@ export type GameInfo$Remote = {
   ScoreData: ScoreData;
   AvailableSpaces: Array<Coord>;
   Spaces: Spaces;
+  LastCoord: Coord;
 };
 
 type IncomingMessage$Remote$GameInfo = {
@@ -152,6 +155,7 @@ const incomingMessage$GameInfo$RemoteDecoder = exact({
     ScoreData: scoreDataDecoder,
     AvailableSpaces: array(coordDecoder),
     Spaces: spacesDecoder,
+    LastCoord: coordDecoder,
   }),
 });
 

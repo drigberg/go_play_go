@@ -22,13 +22,13 @@ type StonePlacement struct {
 }
 
 type Mutation struct {
-	Add StonePlacement
+	Add    StonePlacement
 	Remove []Coord
 }
 
 // Board contains the state of the game board
 type Board struct {
-	Size   int
+	Size      int
 	Mutations []Mutation
 }
 
@@ -69,7 +69,7 @@ func NewBoard(size int) Board {
 	}
 
 	return Board{
-		Size:   size,
+		Size:      size,
 		Mutations: []Mutation{},
 	}
 }
@@ -108,7 +108,7 @@ func (board *Board) applyMutation(spaces [][]string, mutation Mutation) {
 func (board *Board) getPreviousSpaces() [][]string {
 	spaces := board.getEmptySpaces()
 	for turn, mutation := range board.Mutations {
-		if turn < len(board.Mutations) - 1 {
+		if turn < len(board.Mutations)-1 {
 			board.applyMutation(spaces, mutation)
 		}
 	}
@@ -126,10 +126,10 @@ func (board *Board) GetSpaces() [][]string {
 
 func (board *Board) GetLastCoord() Coord {
 	if len(board.Mutations) == 0 {
-			// use dummy coord and color if turn 0
+		// use dummy coord and color if turn 0
 		return Coord{X: -1, Y: -1}
 	}
-	return board.Mutations[len(board.Mutations) - 1].Add.Coord
+	return board.Mutations[len(board.Mutations)-1].Add.Coord
 }
 
 // returns the value of a space

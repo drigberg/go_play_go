@@ -55,6 +55,7 @@ type GameInfoLocal struct {
 	CurrentTurnColor string
 	AvailableSpaces  []Coord
 	Spaces           Spaces
+	LastCoord        Coord
 }
 
 func (gameLocal *GameLocal) RejoinGame(userID string, socketClient *SocketClient) bool {
@@ -109,5 +110,6 @@ func (gameLocal *GameLocal) GetInfo() GameInfoLocal {
 		AvailableSpaces:  gameLocal.Game.Board.GetAvailableSpaces(color),
 		Spaces:           spaces,
 		Turn:             gameLocal.Game.Turn,
+		LastCoord:        gameLocal.Game.Board.GetLastCoord(),
 	}
 }

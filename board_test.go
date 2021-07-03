@@ -85,7 +85,6 @@ func TestSpacesAreEqual(t *testing.T) {
 	}
 }
 
-
 func TestGetPreviousSpaces(t *testing.T) {
 	board := NewBoard(9)
 
